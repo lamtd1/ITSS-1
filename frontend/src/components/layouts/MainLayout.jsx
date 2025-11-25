@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar.jsx';
 import Header from './Header.jsx';
+import FloatingTranslate from '../common/FloatingTranslate.jsx';
 
 const MainLayout = ({ user, onLogout }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -27,6 +28,9 @@ const MainLayout = ({ user, onLogout }) => {
           </div>
         </main>
       </div>
+
+      {/* Floating Translate Button - appears on all pages */}
+      <FloatingTranslate />
     </div>
   );
 };

@@ -4,16 +4,20 @@ import express from 'express';
 import cors from 'cors';
 import { sequelize } from './models/index.js';
 import authRoutes from './routes/authRoutes.js';
+import translationRoutes from './routes/translationRoutes.js';
 import Role from './models/auth/Role.js'; 
 
+const PORT = process.env.PORT;
 const app = express();
 
 app.use(express.json());
 app.use(cors());
 
 app.use('/api/auth', authRoutes);
+app.use('/api/translate', translationRoutes);
 
-const PORT = process.env.PORT;
+
+console.log(PORT);
 
 sequelize.sync({ alter: true })
   .then(async () => {
