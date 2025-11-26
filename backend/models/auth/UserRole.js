@@ -12,19 +12,11 @@ const UserRole = sequelize.define('UserRole', {
         type: DataTypes.INTEGER,
         allowNull: false,
         field: 'user_id',
-        references: {
-        model: 'User',
-        key: 'user_id'
-        }
     },
     roleId: {
         type: DataTypes.INTEGER,
         allowNull: false,
         field: 'role_id',
-        references: {
-        model: 'Role',
-        key: 'role_id'
-        }
     }
     }, {
     tableName: 'User_Role',
