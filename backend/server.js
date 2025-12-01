@@ -1,5 +1,9 @@
 import dotenv from 'dotenv';
 dotenv.config();
+
+const PORT = process.env.PORT;
+const MONGO_URI = process.env.MONGO_URI;
+
 import express from 'express';
 import cors from 'cors';
 import { sequelize } from './models/index.js';
