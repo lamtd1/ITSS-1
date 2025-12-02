@@ -11,6 +11,7 @@ import LoginPage from './features/auth/LoginPage.jsx';
 import AdminDashboard from './features/admin/AdminDashboard.jsx';
 import AdminSlideUpload from './features/admin/AdminSlideUpload.jsx';
 import AdminStudentManage from './features/admin/AdminStudentManage.jsx';
+import AdminAssignmentList from './features/admin/AdminAssignmentList.jsx'; // Mới
 import AdminAssignmentCreate from './features/admin/AdminAssignmentCreate.jsx';
 
 // Student Pages
@@ -53,7 +54,8 @@ const App = () => {
         <Route path="/admin" element={<ProtectedRoute role="admin"><MainLayout user={user} onLogout={handleLogout} /></ProtectedRoute>}>
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="slides" element={<AdminSlideUpload />} />
-          <Route path="assignments" element={<AdminAssignmentCreate />} />
+          <Route path="assignments" element={<AdminAssignmentList />} /> {/* Danh sách */}
+          <Route path="assignments/create" element={<AdminAssignmentCreate />} /> {/* Tạo mới */}
           <Route path="students" element={<AdminStudentManage />} />
         </Route>
 
