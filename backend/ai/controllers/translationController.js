@@ -137,13 +137,14 @@ export const translate = async (req, res) => {
     if (Array.isArray(jsonResponse)) type = 'list';
     else if (jsonResponse.kanji) type = 'word';
 
-    // Save to DB
-    const translation = new Translation({
-      input: { text, source, target },
+    // Save to DB (PostgreSQL)
+    const translation = await Translation.create({
+      input_text: text,
+      input_source: source,
+      input_target: target,
       output: jsonResponse,
-      type
+      type: type
     });
-    await translation.save();
 
     res.json(jsonResponse);
 
@@ -155,8 +156,25 @@ export const translate = async (req, res) => {
 
 export const getHistory = async (req, res) => {
   try {
-    const history = await Translation.find().sort({ createdAt: -1 }).limit(50);
-    res.json(history);
+    const history = await Translation.findAll({
+      order: [['created_at', 'DESC']],
+      limit: 50
+    });
+
+    // Map back to frontend expected structure
+    const formattedHistory = history.map(item => ({
+      _id: item.id, // Frontend might expect _id
+      input: {
+        text: item.input_text,
+        source: item.input_source,
+        target: item.input_target
+      },
+      output: item.output,
+      type: item.type,
+      createdAt: item.created_at
+    }));
+
+    res.json(formattedHistory);
   } catch (error) {
     console.error("History error:", error);
     res.status(500).json({ error: "Failed to fetch history" });
