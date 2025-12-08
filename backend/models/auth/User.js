@@ -37,8 +37,7 @@ const User = sequelize.define('User', {
     }
 }, {
     tableName: 'User',
-    timestamps: true,
-    createdAt: false,
+    timestamps: false,
     freezeTableName: true //Ngăn sequelize tự động đổi tên thành 'Users'
 });
 

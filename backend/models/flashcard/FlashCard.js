@@ -6,12 +6,12 @@ const Flashcard = sequelize.define('Flashcard', {
     type: DataTypes.INTEGER,
     autoIncrement: true,
     primaryKey: true,
-    field: 'flashcard_id' // Ánh xạ với cột trong SQL
+    field: 'flashcard_id'
   },
-  userId: {
+  setId: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    field: 'user_id'
+    field: 'set_id'
   },
   front: {
     type: DataTypes.TEXT,
@@ -23,12 +23,22 @@ const Flashcard = sequelize.define('Flashcard', {
     allowNull: false,
     field: 'flashcard_back'
   },
-  
+  isLearned: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+    field: 'flashcard_is_learned'
+  },
+  createdAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW,
+    field: 'flashcard_created_at'
+  }
 }, {
   tableName: 'Flashcard',
   timestamps: true,
-  createdAt: 'flashcard_created_at', // Ánh xạ tên cột created_at
-  updatedAt: false, // Trong SQL không có updated_at
+  createdAt: 'flashcard_created_at',
+  updatedAt: false,
   freezeTableName: true
 });
 

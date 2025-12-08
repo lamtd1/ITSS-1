@@ -9,6 +9,7 @@ import cors from 'cors';
 import { sequelize } from './models/index.js';
 import authRoutes from './routes/authRoutes.js';
 import slideRoutes from './routes/slideRoutes.js';
+import flashcardRoutes from './routes/flashcardRoutes.js';
 import Role from './models/auth/Role.js';
 
 const app = express();
@@ -18,6 +19,7 @@ app.use(cors());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/slides', slideRoutes);
+app.use('/api/flashcards', flashcardRoutes);
 
 sequelize.sync({ alter: true })
   .then(async () => {

@@ -1,9 +1,133 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Card from '../../components/common/Card.jsx';
 import Button from '../../components/common/Button.jsx';
-import { MOCK_DATA } from '../../lib/mockData.js';
+import CreateSetModal from '../../components/flashcard/CreateSetModal.jsx';
 
 const StudentFlashcardCreate = () => {
+  const navigate = useNavigate();
+  const [flashcardSets, setFlashcardSets] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newSetTitle, setNewSetTitle] = useState('');
+  const [newSetDescription, setNewSetDescription] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+  // Fetch flashcard sets
+  useEffect(() => {
+    const fetchSets = async () => {
+      try {
+        const response = await fetch(`${baseUrl}/api/flashcards/sets`);
+        const data = await response.json();
+        if (data.success) {
+          // Fetch card counts for each set
+          const setsWithCounts = await Promise.all(
+            data.data.map(async (set) => {
+              const cardsResponse = await fetch(`${baseUrl}/api/flashcards/sets/${set.id}/cards`);
+              const cardsData = await cardsResponse.json();
+              const cards = cardsData.success ? cardsData.data : [];
+              const learnedCount = cards.filter(c => c.isLearned).length;
+              return {
+                ...set,
+                count: cards.length,
+                progress: cards.length > 0 ? Math.round((learnedCount / cards.length) * 100) : 0
+              };
+            })
+          );
+          setFlashcardSets(setsWithCounts);
+        } else {
+          setError('セットの取得に失敗しました');
+        }
+      } catch (err) {
+        console.error('Error fetching flashcard sets:', err);
+        setError('サーバーエラーが発生しました');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSets();
+  }, [baseUrl]);
+
+  const handleSetClick = (setId) => {
+    navigate(`/student/flashcards/learn/${setId}`);
+  };
+
+  const handleCreateSet = async (e) => {
+    e.preventDefault();
+    
+    if (!newSetTitle.trim()) {
+      alert('タイトルを入力してください');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(`${baseUrl}/api/flashcards/sets`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: newSetTitle.trim(),
+          description: newSetDescription.trim(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Add new set to list
+        const newSet = { ...data.data, count: 0, progress: 0 };
+        setFlashcardSets(prev => [...prev, newSet]);
+
+        // Reset form and close modal
+        setNewSetTitle('');
+        setNewSetDescription('');
+        setShowCreateModal(false);
+        
+        alert('セットを作成しました！');
+      } else {
+        alert('セットの作成に失敗しました');
+      }
+    } catch (err) {
+      console.error('Error creating set:', err);
+      alert('サーバーエラーが発生しました');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const filteredSets = flashcardSets.filter(set =>
+    set.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-140px)]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">読み込み中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-140px)]">
+        <div className="text-center text-red-600">
+          <span className="material-symbols-outlined text-5xl mb-2">error</span>
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -11,9 +135,9 @@ const StudentFlashcardCreate = () => {
           <h2 className="text-2xl font-bold text-gray-900">フラッシュカード作成</h2>
           <p className="text-gray-500">単語を復習するためのカードセットを作成・管理します。</p>
         </div>
-        <Button className="shrink-0">
+        <Button className="shrink-0" onClick={() => setShowCreateModal(true)}>
             <span className="material-symbols-outlined mr-1">add</span> 
-            Flashcardを追加
+            Flashcardセットを作成
         </Button>
       </div>
 
@@ -23,19 +147,33 @@ const StudentFlashcardCreate = () => {
             <input 
                 type="text" 
                 placeholder="フラッシュカードを検索..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-blue-500"
             />
          </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 flex flex-col items-center justify-center text-gray-400 hover:bg-gray-50 hover:border-blue-400 hover:text-blue-500 transition-all cursor-pointer h-48">
+        <div 
+          onClick={() => setShowCreateModal(true)}
+          className="border-2 border-dashed border-gray-300 rounded-xl p-8 flex flex-col items-center justify-center text-gray-400 hover:bg-gray-50 hover:border-blue-400 hover:text-blue-500 transition-all cursor-pointer h-48"
+        >
             <span className="material-symbols-outlined text-4xl mb-2">add</span>
             <span className="font-medium">新規セット作成</span>
         </div>
 
-        {MOCK_DATA.flashcards.map((set) => (
-            <Card key={set.id} className="hover:shadow-md transition-all cursor-pointer group flex flex-col h-48 justify-between relative overflow-hidden">
+        {filteredSets.length === 0 ? (
+          <div className="col-span-full text-center py-12 text-gray-500">
+            {searchQuery ? 'セットが見つかりません' : 'セットがまだありません'}
+          </div>
+        ) : (
+          filteredSets.map((set) => (
+            <Card 
+              key={set.id} 
+              onClick={() => handleSetClick(set.id)}
+              className="hover:shadow-md transition-all cursor-pointer group flex flex-col h-48 justify-between relative overflow-hidden"
+            >
                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                     <span className="material-symbols-outlined text-6xl text-gray-500">style</span>
                 </div>
@@ -54,8 +192,24 @@ const StudentFlashcardCreate = () => {
                     </div>
                 </div>
             </Card>
-        ))}
+          ))
+        )}
       </div>
+
+      <CreateSetModal
+        isOpen={showCreateModal}
+        onClose={() => {
+          setShowCreateModal(false);
+          setNewSetTitle('');
+          setNewSetDescription('');
+        }}
+        onSubmit={handleCreateSet}
+        titleValue={newSetTitle}
+        descriptionValue={newSetDescription}
+        onTitleChange={(e) => setNewSetTitle(e.target.value)}
+        onDescriptionChange={(e) => setNewSetDescription(e.target.value)}
+        isSubmitting={isSubmitting}
+      />
     </div>
   );
 };

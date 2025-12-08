@@ -2,38 +2,43 @@ import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
 
 const Translation = sequelize.define('Translation', {
-    id: {
+    translation_id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true
     },
-    input_text: {
+    user_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false
+    },
+    translation_input_text: {
         type: DataTypes.TEXT,
         allowNull: true
     },
-    input_source: {
+    translation_input_source: {
         type: DataTypes.TEXT,
         allowNull: true
     },
-    input_target: {
+    translation_input_target: {
         type: DataTypes.TEXT,
         allowNull: true
     },
-    output: {
+    translation_output: {
         type: DataTypes.JSONB,
         allowNull: true
     },
-    type: {
+    translation_type: {
         type: DataTypes.ENUM('word', 'sentence', 'list'),
         allowNull: true
     },
-    created_at: {
+    translation_created_at: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW
     }
 }, {
-    tableName: 'translations',
-    timestamps: false // We are managing created_at manually or via default
+    tableName: 'Translation',
+    freezeTableName: true,
+    timestamps: false
 });
 
 export default Translation;

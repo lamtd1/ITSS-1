@@ -39,7 +39,7 @@ const classifyInput = (text) => {
 
 export const translate = async (req, res) => {
   try {
-    const { text, source, target, mode = 'dictionary' } = req.body;
+    const { text, source, target, mode = 'dictionary', user_id } = req.body;
     if (!text) return res.status(400).json({ error: "Text is required" });
 
     const inputType = classifyInput(text);
@@ -139,39 +139,56 @@ export const translate = async (req, res) => {
 
     // Save to DB (PostgreSQL)
     const translation = await Translation.create({
-      input_text: text,
-      input_source: source,
-      input_target: target,
-      output: jsonResponse,
-      type: type
+      user_id: user_id ?? 1,
+      translation_input_text: text,
+      translation_input_source: source,
+      translation_input_target: target,
+      translation_output: jsonResponse,
+      translation_type: type
     });
 
     res.json(jsonResponse);
 
   } catch (error) {
     console.error("Translation error:", error);
-    res.status(500).json({ error: "Translation failed", details: error.message });
+    
+    // Handle quota exceeded error
+    if (error.status === 429) {
+      return res.status(429).json({ 
+        error: "API quota exceeded", 
+        message: "Google Gemini APIの無料枠を超過しました。しばらく待ってから再度お試しください。",
+        details: "Đã vượt quá giới hạn API miễn phí. Vui lòng thử lại sau.",
+        retryAfter: error.errorDetails?.find(d => d['@type'] === 'type.googleapis.com/google.rpc.RetryInfo')?.retryDelay
+      });
+    }
+    
+    // Handle other errors
+    res.status(500).json({ 
+      error: "Translation failed", 
+      message: "翻訳に失敗しました。もう一度お試しください。",
+      details: error.message 
+    });
   }
 };
 
 export const getHistory = async (req, res) => {
   try {
     const history = await Translation.findAll({
-      order: [['created_at', 'DESC']],
+      order: [['translation_created_at', 'DESC']],
       limit: 50
     });
 
     // Map back to frontend expected structure
     const formattedHistory = history.map(item => ({
-      _id: item.id, // Frontend might expect _id
+      _id: item.translation_id, // Frontend might expect _id
       input: {
-        text: item.input_text,
-        source: item.input_source,
-        target: item.input_target
+        text: item.translation_input_text,
+        source: item.translation_input_source,
+        target: item.translation_input_target
       },
-      output: item.output,
-      type: item.type,
-      createdAt: item.created_at
+      output: item.translation_output,
+      type: item.translation_type,
+      createdAt: item.translation_created_at
     }));
 
     res.json(formattedHistory);
