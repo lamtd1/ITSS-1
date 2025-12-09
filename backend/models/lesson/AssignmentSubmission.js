@@ -1,7 +1,7 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../../config/db.js';
 
-const AssignmentSubmission = sequelize.define('AssignmentSubmission', {
+const AssignmentSubmission = sequelize.define('Submission', {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,

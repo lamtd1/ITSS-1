@@ -6,6 +6,7 @@ import Permission from './auth/Permission.js';
 import RolePermission from './auth/RolePermission.js';
 import RecentActivity from './activity/RecentActivity.js';
 import FlashCard from './flashcard/FlashCard.js';
+import FlashcardSet from './flashcard/FlashcardSet.js';
 import Slide from './slide/Slide.js';
 import SlideNote from './slide/SlideNote.js';
 import Tag from './slide/Tag.js';
@@ -50,9 +51,13 @@ Permission.belongsToMany(Role, {
 User.hasMany(RecentActivity, { foreignKey: 'userId', as: 'activities' });
 RecentActivity.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
-//User & FlashCard (1-n)
-User.hasMany(FlashCard, { foreignKey: 'userId', as: 'flashcards' });
-FlashCard.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+// User & FlashcardSet (1-n)
+User.hasMany(FlashcardSet, { foreignKey: 'userId', as: 'flashcardSets', onDelete: 'CASCADE' });
+FlashcardSet.belongsTo(User, { foreignKey: 'userId', as: 'owner' });
+
+// FlashcardSet & FlashCard (1-n)
+FlashcardSet.hasMany(FlashCard, { foreignKey: 'setId', as: 'flashcards', onDelete: 'CASCADE' });
+FlashCard.belongsTo(FlashcardSet, { foreignKey: 'setId', as: 'set' });
 
 // User & Slide (1-n)
 User.hasMany(Slide, { foreignKey: 'userId', as: 'slides' });
@@ -131,6 +136,7 @@ export {
   RolePermission,
   RecentActivity,
   FlashCard,
+  FlashcardSet,
   Slide,
   SlideNote,
   Tag,

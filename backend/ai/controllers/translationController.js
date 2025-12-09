@@ -13,9 +13,28 @@ const API_KEY = process.env.GOOGLE_API_KEY;
 
 const genAI = new GoogleGenerativeAI(API_KEY);
 const model = genAI.getGenerativeModel({
-  model: "gemini-2.0-flash",
+  model: "gemini-2.5-flash",
   generationConfig: { responseMimeType: "application/json" }
 });
+
+// Ensure sequence for Translation.translation_id is correctly aligned with current max id
+let seqChecked = false;
+const ensureTranslationSequence = async () => {
+  if (seqChecked) return;
+  try {
+    await Translation.sequelize.query(`
+      SELECT setval(
+        pg_get_serial_sequence('"Translation"', 'translation_id'),
+        (SELECT COALESCE(MAX(translation_id), 0) + 1 FROM "Translation"),
+        false
+      );
+    `);
+    seqChecked = true;
+  } catch (e) {
+    // Log but do not block translates
+    console.warn('Sequence alignment skipped:', e?.message || e);
+  }
+};
 
 // Helper to classify input
 const classifyInput = (text) => {
@@ -39,7 +58,7 @@ const classifyInput = (text) => {
 
 export const translate = async (req, res) => {
   try {
-    const { text, source, target, mode = 'dictionary' } = req.body;
+    const { text, source, target, mode = 'dictionary', user_id } = req.body;
     if (!text) return res.status(400).json({ error: "Text is required" });
 
     const inputType = classifyInput(text);
@@ -137,26 +156,64 @@ export const translate = async (req, res) => {
     if (Array.isArray(jsonResponse)) type = 'list';
     else if (jsonResponse.kanji) type = 'word';
 
-    // Save to DB
-    const translation = new Translation({
-      input: { text, source, target },
-      output: jsonResponse,
-      type
+    // Align sequence once to avoid duplicate key errors
+    await ensureTranslationSequence();
+
+    // Save to DB (PostgreSQL)
+    const translation = await Translation.create({
+      user_id: user_id ?? 1,
+      translation_input_text: text,
+      translation_input_source: source,
+      translation_input_target: target,
+      translation_output: jsonResponse,
+      translation_type: type
     });
-    await translation.save();
 
     res.json(jsonResponse);
 
   } catch (error) {
     console.error("Translation error:", error);
-    res.status(500).json({ error: "Translation failed", details: error.message });
+    
+    // Handle quota exceeded error
+    if (error.status === 429) {
+      return res.status(429).json({ 
+        error: "API quota exceeded", 
+        message: "Google Gemini APIの無料枠を超過しました。しばらく待ってから再度お試しください。",
+        details: "Đã vượt quá giới hạn API miễn phí. Vui lòng thử lại sau.",
+        retryAfter: error.errorDetails?.find(d => d['@type'] === 'type.googleapis.com/google.rpc.RetryInfo')?.retryDelay
+      });
+    }
+    
+    // Handle other errors
+    res.status(500).json({ 
+      error: "Translation failed", 
+      message: "翻訳に失敗しました。もう一度お試しください。",
+      details: error.message 
+    });
   }
 };
 
 export const getHistory = async (req, res) => {
   try {
-    const history = await Translation.find().sort({ createdAt: -1 }).limit(50);
-    res.json(history);
+    const history = await Translation.findAll({
+      order: [['translation_created_at', 'DESC']],
+      limit: 50
+    });
+
+    // Map back to frontend expected structure
+    const formattedHistory = history.map(item => ({
+      _id: item.translation_id, // Frontend might expect _id
+      input: {
+        text: item.translation_input_text,
+        source: item.translation_input_source,
+        target: item.translation_input_target
+      },
+      output: item.translation_output,
+      type: item.translation_type,
+      createdAt: item.translation_created_at
+    }));
+
+    res.json(formattedHistory);
   } catch (error) {
     console.error("History error:", error);
     res.status(500).json({ error: "Failed to fetch history" });

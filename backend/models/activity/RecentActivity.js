@@ -28,7 +28,7 @@ const RecentActivity = sequelize.define('RecentActivity', {
         field: 'activity_time'
     }
 }, {
-    tableName: 'RecentActivite',
+    tableName: 'Recent_Activitie',
     timestamps: false,
     freezeTableName: true
 });

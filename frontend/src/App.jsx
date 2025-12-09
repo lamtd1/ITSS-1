@@ -19,6 +19,7 @@ import StudentDictionary from './features/student/StudentDictionary.jsx';
 import StudentSlideView from './features/student/StudentSlideView.jsx';
 import StudentAssignmentList from './features/student/StudentAssignmentList.jsx';
 import StudentFlashcardCreate from './features/student/StudentFlashcardCreate.jsx';
+import StudentFlashcardLearn from './features/student/StudentFlashcardLearn.jsx';
 
 const App = () => {
   const [user, setUser] = useState(() => {
@@ -64,6 +65,7 @@ const App = () => {
           <Route path="slides" element={<StudentSlideView />} />
           <Route path="assignments" element={<StudentAssignmentList />} />
           <Route path="flashcards" element={<StudentFlashcardCreate />} />
+          <Route path="flashcards/learn/:setId" element={<StudentFlashcardLearn />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/login" replace />} />
