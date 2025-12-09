@@ -13,9 +13,28 @@ const API_KEY = process.env.GOOGLE_API_KEY;
 
 const genAI = new GoogleGenerativeAI(API_KEY);
 const model = genAI.getGenerativeModel({
-  model: "gemini-2.0-flash",
+  model: "gemini-2.5-flash",
   generationConfig: { responseMimeType: "application/json" }
 });
+
+// Ensure sequence for Translation.translation_id is correctly aligned with current max id
+let seqChecked = false;
+const ensureTranslationSequence = async () => {
+  if (seqChecked) return;
+  try {
+    await Translation.sequelize.query(`
+      SELECT setval(
+        pg_get_serial_sequence('"Translation"', 'translation_id'),
+        (SELECT COALESCE(MAX(translation_id), 0) + 1 FROM "Translation"),
+        false
+      );
+    `);
+    seqChecked = true;
+  } catch (e) {
+    // Log but do not block translates
+    console.warn('Sequence alignment skipped:', e?.message || e);
+  }
+};
 
 // Helper to classify input
 const classifyInput = (text) => {
@@ -136,6 +155,9 @@ export const translate = async (req, res) => {
     let type = 'sentence';
     if (Array.isArray(jsonResponse)) type = 'list';
     else if (jsonResponse.kanji) type = 'word';
+
+    // Align sequence once to avoid duplicate key errors
+    await ensureTranslationSequence();
 
     // Save to DB (PostgreSQL)
     const translation = await Translation.create({
