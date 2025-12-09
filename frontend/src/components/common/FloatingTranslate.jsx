@@ -23,7 +23,18 @@ const FloatingTranslate = () => {
         })
       });
 
-      if (!response.ok) throw new Error('Translation failed');
+      if (!response.ok) {
+        const errorData = await response.json();
+        
+        if (response.status === 429) {
+          alert('APIの利用制限に達しました。しばらく待ってから再度お試しください。\n\n' + 
+                'Đã vượt quá giới hạn API. Vui lòng thử lại sau.');
+          setIsTranslating(false);
+          return;
+        }
+        
+        throw new Error(errorData.message || 'Translation failed');
+      }
 
       const data = await response.json();
 
@@ -51,7 +62,7 @@ const FloatingTranslate = () => {
       setFurigana(furiganaResult);
     } catch (error) {
       console.error('Translation error:', error);
-      setTranslatedText('Lỗi dịch thuật. Vui lòng thử lại.');
+      setTranslatedText('翻訳に失敗しました。もう一度お試しください。\n\nDịch thất bại. Vui lòng thử lại.');
     } finally {
       setIsTranslating(false);
     }
