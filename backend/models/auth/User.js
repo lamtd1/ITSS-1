@@ -29,15 +29,12 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING(20),
         allowNull: true,
         field: 'user_phone'
-    },
-    createdAt: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
-        field: 'user_created_at'
     }
 }, {
     tableName: 'User',
-    timestamps: false,
+    timestamps: true,
+    createdAt: 'user_created_at',
+    updatedAt: false, // <--- QUAN TRỌNG: Tắt cột này vì DB không có
     freezeTableName: true //Ngăn sequelize tự động đổi tên thành 'Users'
 });
 
