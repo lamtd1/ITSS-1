@@ -13,9 +13,14 @@ import flashcardRoutes from './routes/flashcardRoutes.js';
 import Role from './models/auth/Role.js';
 
 const app = express();
+app.use(cors()); // Allow all origins for debugging
+app.use((req, res, next) => {
+  console.log(`[DEBUG] Received ${req.method} request for ${req.url} from ${req.headers.origin}`);
+  next();
+});
 
 app.use(express.json());
-app.use(cors());
+
 
 app.use('/api/auth', authRoutes);
 app.use('/api/slides', slideRoutes);
