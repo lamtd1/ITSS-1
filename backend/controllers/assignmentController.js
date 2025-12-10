@@ -173,3 +173,14 @@ export const getTeacherAssignments = async (req, res) => {
     res.status(500).send({ message: error.message });
   }
 };
+
+
+// api Edit bai tap (giao vien)
+// api Xoa bai tap (giao vien)
+
+// --- 3. LẤY DANH SÁCH BÀI TẬP (Của Học sinh) ---
+
+// Nop bai tap
+
+
+
