@@ -175,10 +175,197 @@ export const getTeacherAssignments = async (req, res) => {
 };
 
 
-// api Edit bai tap (giao vien)
-// api Xoa bai tap (giao vien)
+// --- 3. EDIT BÀI TẬP (GIÁO VIÊN) ---
+export const updateAssignment = async (req, res) => {
+  const t = await sequelize.transaction();
 
-// --- 3. LẤY DANH SÁCH BÀI TẬP (Của Học sinh) ---
+  try {
+    const { id } = req.params; // ID bài tập cần sửa
+    const {
+      title,
+      description,
+      startDate,
+      endDate,
+      totalScore,
+      assignType,
+      assignedStudents,
+      questions,
+      userId, // ID giáo viên (để kiểm tra quyền)
+    } = req.body;
+
+    // --- Tìm bài tập ---
+    const assignment = await Assignment.findByPk(id, { transaction: t });
+    if (!assignment) {
+      await t.rollback();
+      return res.status(404).send({ message: "Không tìm thấy bài tập" });
+    }
+
+    // --- Kiểm tra quyền sở hữu ---
+    if (userId && assignment.userId !== userId) {
+      await t.rollback();
+      return res.status(403).send({ message: "Bạn không có quyền sửa bài tập này" });
+    }
+
+    // --- Validate Tổng điểm ---
+    if (questions && questions.length > 0) {
+      const calcScore = questions.reduce(
+        (sum, q) => sum + parseInt(q.score || 0),
+        0
+      );
+      if (calcScore !== parseInt(totalScore)) {
+        await t.rollback();
+        return res.status(400).send({
+          message: `Lỗi: Tổng điểm câu hỏi (${calcScore}) không khớp với điểm bài tập (${totalScore})`,
+        });
+      }
+    }
+
+    // --- Bước 1: Cập nhật Assignment ---
+    await assignment.update(
+      {
+        title: title,
+        description: description,
+        deadline: endDate,
+        score: totalScore,
+        assignType: assignType,
+        assigneeList: assignType === "specific" ? assignedStudents : null,
+      },
+      { transaction: t }
+    );
+
+    // --- Bước 2: Cập nhật Questions (Xóa cũ, tạo mới) ---
+    if (questions && questions.length > 0) {
+      // Xóa tất cả câu hỏi cũ
+      await Question.destroy({
+        where: { assignmentId: id },
+        transaction: t,
+      });
+
+      // Tạo câu hỏi mới
+      const questionData = questions.map((q) => {
+        let contentToSave = q.text;
+        if (q.type === "Tno") {
+          const contentObj = {
+            prompt: q.text,
+            options: q.options,
+          };
+          contentToSave = JSON.stringify(contentObj);
+        }
+
+        return {
+          assignmentId: id,
+          text: contentToSave,
+          type: q.type,
+          score: q.score,
+        };
+      });
+
+      await Question.bulkCreate(questionData, { transaction: t });
+    }
+
+    // --- Bước 3: Cập nhật Submissions (nếu thay đổi danh sách học sinh) ---
+    // Xóa submissions cũ
+    await AssignmentSubmission.destroy({
+      where: { assignmentId: id },
+      transaction: t,
+    });
+
+    // Tạo submissions mới
+    let studentIds = [];
+
+    if (assignType === "all") {
+      const students = await User.findAll({
+        include: [
+          {
+            model: (await import("../models/index.js")).Role,
+            as: "roles",
+            where: { role_name: "User" },
+          },
+        ],
+        attributes: ["id"],
+        transaction: t,
+      });
+      studentIds = students.map((s) => s.id);
+    } else if (assignedStudents && assignedStudents.length > 0) {
+      const students = await User.findAll({
+        where: {
+          email: { [Op.in]: assignedStudents },
+        },
+        attributes: ["id"],
+        transaction: t,
+      });
+      studentIds = students.map((s) => s.id);
+    }
+
+    if (studentIds.length > 0) {
+      const submissionData = studentIds.map((sid) => ({
+        assignmentId: id,
+        userId: sid,
+        status: "assigned",
+        score: null,
+      }));
+
+      await AssignmentSubmission.bulkCreate(submissionData, {
+        transaction: t,
+        ignoreDuplicates: true,
+      });
+    }
+
+    await t.commit();
+    res.send({ message: "Cập nhật bài tập thành công!", id: assignment.id });
+  } catch (error) {
+    await t.rollback();
+    console.error(error);
+    res.status(500).send({ message: "Lỗi server: " + error.message });
+  }
+};
+
+// --- 4. XÓA BÀI TẬP (GIÁO VIÊN) ---
+export const deleteAssignment = async (req, res) => {
+  const t = await sequelize.transaction();
+
+  try {
+    const { id } = req.params; // ID bài tập cần xóa
+    const { userId } = req.body; // ID giáo viên (để kiểm tra quyền)
+
+    // --- Tìm bài tập ---
+    const assignment = await Assignment.findByPk(id, { transaction: t });
+    if (!assignment) {
+      await t.rollback();
+      return res.status(404).send({ message: "Không tìm thấy bài tập" });
+    }
+
+    // --- Kiểm tra quyền sở hữu ---
+    if (userId && assignment.userId !== userId) {
+      await t.rollback();
+      return res.status(403).send({ message: "Bạn không có quyền xóa bài tập này" });
+    }
+
+    // --- Xóa Submissions ---
+    await AssignmentSubmission.destroy({
+      where: { assignmentId: id },
+      transaction: t,
+    });
+
+    // --- Xóa Questions ---
+    await Question.destroy({
+      where: { assignmentId: id },
+      transaction: t,
+    });
+
+    // --- Xóa Assignment ---
+    await assignment.destroy({ transaction: t });
+
+    await t.commit();
+    res.send({ message: "Xóa bài tập thành công!" });
+  } catch (error) {
+    await t.rollback();
+    console.error(error);
+    res.status(500).send({ message: "Lỗi server: " + error.message });
+  }
+};
+
+// --- 5. LẤY DANH SÁCH BÀI TẬP (Của Học sinh) ---
 
 // Nop bai tap
 
