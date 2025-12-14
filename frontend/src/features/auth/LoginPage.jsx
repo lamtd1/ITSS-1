@@ -1,22 +1,50 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import AuthService from '../auth/AuthService.jsx';
 import { MOCK_DATA } from '../../lib/mockData.js';
 
 const LoginPage = ({ onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Logic kiểm tra đăng nhập giả lập
-    if (email.includes('admin')) {
-      onLogin(MOCK_DATA.currentUser.admin);
-    } else if (email.includes('student')) {
-      onLogin(MOCK_DATA.currentUser.student);
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError('');
+  setIsLoading(true);
+  try {
+    const data = await AuthService.login(email, password);
+    localStorage.setItem('accessToken', data.token);
+
+    // Chuẩn hóa role nếu có trường roles
+    let userData = data.user;
+    if (userData.roles) {
+      const roleNames = Array.isArray(userData.roles)
+        ? userData.roles
+        : [userData.roles];
+
+      const lowerRoles = roleNames.map(r => r.toLowerCase());
+      if (lowerRoles.includes('admin')) userData.role = 'admin';
+      else if (lowerRoles.includes('teacher')) userData.role = 'teacher';
+      else userData.role = 'student';
     } else {
-      setError('メールアドレスまたはパスワードが正しくありません');
+      userData.role = 'student';
     }
-  };
+
+    onLogin(userData);
+    navigate(
+      userData.role === 'teacher' ? '/admin/dashboard'
+      : userData.role === 'admin' ? '/admin/dashboard'
+      : '/student/dashboard'
+    );
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-white p-6 lg:gap-32 md:gap-10">
@@ -65,9 +93,10 @@ const LoginPage = ({ onLogin }) => {
           <div className="flex justify-center mt-8 mb-4">
              <button
                 type="submit"
+                disabled={isLoading}
                 className="bg-[#1E50A2] text-white font-bold text-xl py-3 px-16 rounded-lg hover:bg-blue-900 transition-all shadow-md active:scale-95"
              >
-               ログイン
+                {isLoading ? '読み込み中...' : 'ログイン'}
              </button>
           </div>
 
@@ -78,7 +107,7 @@ const LoginPage = ({ onLogin }) => {
             </div>
             <div className="flex justify-between items-center">
                <span>アカウントをお持ちないですか？</span>
-               <a href="#" className="underline text-[#1E50A2] font-bold hover:text-blue-900">新規登録</a>
+               <a href="/register" className="underline text-[#1E50A2] font-bold hover:text-blue-900">新規登録</a>
             </div>
           </div>
         </form>
