@@ -1,20 +1,9 @@
 import { User, Role } from '../../models/index.js';
+import { generateAccessToken } from '../../utils/jwt-utils.js';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-
-const generateToken = (user) => {
-  // Lấy danh sách tên role để đưa vào token (nếu cần)
-  const roleNames = user.roles ? user.roles.map(r => r.name) : [];
-  
-  return jwt.sign(
-    { id: user.id, roles: roleNames }, 
-    process.env.JWT_SECRET, 
-    { expiresIn: process.env.JWT_EXPIRES_IN }
-  );
-};
 
 export const registerUser = async (userData) => {
-  const { username, email, password, phone } = userData;
+  const { username, email, password, phone, roles } = userData;
 
   const userExists = await User.findOne({ where: { email } });
   if (userExists) throw new Error('Email đã tồn tại');
@@ -27,7 +16,8 @@ export const registerUser = async (userData) => {
     username,
     email,
     password: hashedPassword,
-    phone
+    phone,
+    roles: roles || []
   });
 
   //Gán Role mặc định
@@ -56,7 +46,7 @@ export const loginUser = async (email, password) => {
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) throw new Error('Email hoặc mật khẩu không chính xác');
 
-  const token = generateToken(user);   
+  const token = generateAccessToken(user.id, user.email, user.roles.map(r => r.name));   
   return { user, token };
 };
 

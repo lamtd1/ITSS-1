@@ -23,7 +23,7 @@ export const login = async (req, res) => {
       success: true,
       message: 'Đăng nhập thành công',
       token,
-      user: { id: user.id, username: user.username, email: user.email }
+      user: { id: user.id, username: user.username, email: user.email, roles: user.roles.map(r => r.name) }
     });
   } catch (error) {
     res.status(401).json({ success: false, message: error.message });
