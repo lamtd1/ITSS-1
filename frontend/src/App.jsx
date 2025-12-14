@@ -6,6 +6,7 @@ import MainLayout from './components/layouts/MainLayout.jsx';
 
 // Auth Page
 import LoginPage from './features/auth/LoginPage.jsx';
+import RegisterPage from './features/auth/RegisterPage.jsx';
 
 // Admin Pages
 import AdminDashboard from './features/admin/AdminDashboard.jsx';
@@ -26,8 +27,13 @@ import StudentAssignmentDetail from './features/student/StudentAssignmentDetail.
 const App = () => {
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('kakehashi_user');
-    return saved ? JSON.parse(saved) : null;
-  });
+    if (!saved || saved === "undefined") return null;
+  try {
+    return JSON.parse(saved);
+  } catch {
+    return null;
+  }
+});
 
   const handleLogin = (userData) => {
     setUser(userData);
@@ -39,21 +45,49 @@ const App = () => {
     localStorage.removeItem('kakehashi_user');
   };
 
-  const ProtectedRoute = ({ children, role }) => {
+  const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     if (!user) return <Navigate to="/login" replace />;
-    if (role && user.role !== role) {
-      return <Navigate to={user.role === 'admin' ? '/admin/dashboard' : '/student/dashboard'} replace />;
+    
+    // Chuẩn hóa role của user về chữ thường để so sánh chính xác
+    const userRole = (user.role || '').toLowerCase();
+    
+    // Đảm bảo allowedRoles luôn là mảng và chuẩn hóa về chữ thường
+    const validRoles = (Array.isArray(allowedRoles) ? allowedRoles : []).map(r => r.toLowerCase());
+
+    // Nếu role của user KHÔNG nằm trong danh sách được phép
+    if (validRoles.length > 0 && !validRoles.includes(userRole)) {
+      // Điều hướng user về trang dashboard tương ứng với quyền thật của họ
+      if (userRole === 'admin' || userRole === 'teacher') {
+        return <Navigate to="/admin/dashboard" replace />;
+      } else {
+        return <Navigate to="/student/dashboard" replace />;
+      }
     }
+    
     return children;
+  };
+
+  const getHomeRoute = () => {
+    if (!user) return '/login';
+    const role = (user.role || '').toLowerCase();
+    if (role === 'admin' || role === 'teacher') return '/admin/dashboard';
+    return '/student/dashboard';
   };
 
   return (
     <Router>
       <Routes>
-        <Route path="/login" element={!user ? <LoginPage onLogin={handleLogin} /> : <Navigate to={user.role === 'admin' ? '/admin/dashboard' : '/student/dashboard'} />} />
-        
+        <Route path="/login" element={!user ? <LoginPage onLogin={handleLogin} /> : <Navigate to={getHomeRoute()} />} />
+        <Route path="/register" element={!user ? <RegisterPage /> : <Navigate to={getHomeRoute()} replace />} />
         {/* Admin Routes */}
-        <Route path="/admin" element={<ProtectedRoute role="admin"><MainLayout user={user} onLogout={handleLogout} /></ProtectedRoute>}>
+        <Route 
+          path="/admin" 
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'teacher']}>
+              <MainLayout user={user} onLogout={handleLogout} />
+            </ProtectedRoute>
+          }
+        >
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="slides" element={<AdminSlideUpload />} />
           <Route path="assignments" element={<AdminAssignmentList />} /> {/* Danh sách */}
