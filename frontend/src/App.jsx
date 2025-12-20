@@ -21,6 +21,7 @@ import StudentSlideView from './features/student/StudentSlideView.jsx';
 import StudentAssignmentList from './features/student/StudentAssignmentList.jsx';
 import StudentFlashcardCreate from './features/student/StudentFlashcardCreate.jsx';
 import StudentFlashcardLearn from './features/student/StudentFlashcardLearn.jsx';
+import StudentAssignmentDetail from './features/student/StudentAssignmentDetail.jsx';
 
 const App = () => {
   const [user, setUser] = useState(() => {
@@ -67,6 +68,7 @@ const App = () => {
           <Route path="dictionary" element={<StudentDictionary />} />
           <Route path="slides" element={<StudentSlideView />} />
           <Route path="assignments" element={<StudentAssignmentList />} />
+          <Route path="assignments/:id" element={<StudentAssignmentDetail />} />
           <Route path="flashcards" element={<StudentFlashcardCreate />} />
           <Route path="flashcards/learn/:setId" element={<StudentFlashcardLearn />} />
         </Route>
