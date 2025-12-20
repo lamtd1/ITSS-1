@@ -1,4 +1,4 @@
-import { DataTypes } from 'sequelize';
+import { DataTypes, Sequelize } from 'sequelize';
 import sequelize from '../../config/db.js';
 
 const User = sequelize.define('User', {
@@ -33,7 +33,7 @@ const User = sequelize.define('User', {
     user_created_at: {
         type: DataTypes.DATE,
         allowNull: false,
-        defaultValue: DataTypes.NOW,
+        defaultValue: Sequelize.NOW,
         field: 'user_created_at'
     }
 }, {

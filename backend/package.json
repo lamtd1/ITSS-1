@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start:ai": "nodemon ai/server.js",
-    "start:server": "nodemon --inspect server.js"
+    "start:server": "nodemon --inspect server.js",
+    "hash:seed": "node scripts/hash-seed-passwords.js"
   },
   "keywords": [],
   "author": "",
