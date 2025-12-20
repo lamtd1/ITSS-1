@@ -155,10 +155,16 @@ const StudentFlashcardCreate = () => {
           <h2 className="text-2xl font-bold text-gray-900">フラッシュカード作成</h2>
           <p className="text-gray-500">単語を復習するためのカードセットを作成・管理します。</p>
         </div>
-        <Button className="shrink-0" onClick={() => setShowUploadModal(true)}>
-          <span className="material-symbols-outlined mr-1">upload_file</span> 
-          Excelでフラッシュカードセットを追加
-        </Button>
+        <div className="flex gap-2 shrink-0">
+          <Button onClick={() => setShowCreateModal(true)}>
+            <span className="material-symbols-outlined mr-1">add</span>
+            新しいセットを作成
+          </Button>
+          <Button onClick={() => setShowUploadModal(true)}>
+            <span className="material-symbols-outlined mr-1">upload_file</span> 
+            Excelでフラッシュカードセットを追加
+          </Button>
+        </div>
       </div>
 
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex gap-4">
