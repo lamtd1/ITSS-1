@@ -1,16 +1,34 @@
 import express from 'express';
-import * as assignmentController from '../controllers/assignmentController.js';
+import {
+  createAssignment,
+  getTeacherAssignments,
+  updateAssignment,
+  deleteAssignment,
+  getStudentAssignments,
+  getAssignmentDetails,
+  submitAssignment,
+  saveDraft
+} from '../controllers/assignmentController.js';
 
 const router = express.Router();
 
 // --- GIÁO VIÊN ---
-
 // Tạo bài tập mới
-// POST /api/assignments
-router.post('/', assignmentController.createAssignment);
+router.post('/', createAssignment);
 
 // Lấy danh sách bài tập (của giáo viên)
-// GET /api/assignments?userId=...
-router.get('/', assignmentController.getTeacherAssignments);
+router.get('/', getTeacherAssignments);
+
+// Cập nhật bài tập
+router.put('/:id', updateAssignment);
+
+// Xóa bài tập
+router.delete('/:id', deleteAssignment);
+
+// --- HỌC SINH ---
+router.get('/student', getStudentAssignments);
+router.get('/:id/details', getAssignmentDetails); 
+router.post('/:id/submit', submitAssignment);
+router.post('/:id/draft', saveDraft);
 
 export default router;

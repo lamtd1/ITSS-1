@@ -175,7 +175,7 @@ export const getTeacherAssignments = async (req, res) => {
 };
 
 
-// --- 3. EDIT BÀI TẬP (GIÁO VIÊN) ---
+// --- 3. EDIT BÀI TẬP (GIÁO VIÊN) - IMPROVED ---
 export const updateAssignment = async (req, res) => {
   const t = await sequelize.transaction();
 
@@ -193,6 +193,12 @@ export const updateAssignment = async (req, res) => {
       userId, // ID giáo viên (để kiểm tra quyền)
     } = req.body;
 
+    // --- Validation đầu vào ---
+    if (!title || !endDate || !totalScore) {
+      await t.rollback();
+      return res.status(400).send({ message: "Thiếu thông tin bắt buộc: title, endDate, totalScore" });
+    }
+
     // --- Tìm bài tập ---
     const assignment = await Assignment.findByPk(id, { transaction: t });
     if (!assignment) {
@@ -201,9 +207,25 @@ export const updateAssignment = async (req, res) => {
     }
 
     // --- Kiểm tra quyền sở hữu ---
-    if (userId && assignment.userId !== userId) {
+    if (userId && assignment.userId !== parseInt(userId)) {
       await t.rollback();
       return res.status(403).send({ message: "Bạn không có quyền sửa bài tập này" });
+    }
+
+    // --- Kiểm tra xem có submissions đã nộp chưa ---
+    const submittedCount = await AssignmentSubmission.count({
+      where: { 
+        assignmentId: id,
+        status: 'submitted'
+      },
+      transaction: t
+    });
+
+    if (submittedCount > 0) {
+      await t.rollback();
+      return res.status(400).send({ 
+        message: `Không thể sửa bài tập đã có ${submittedCount} học sinh nộp bài. Vui lòng tạo bài tập mới.` 
+      });
     }
 
     // --- Validate Tổng điểm ---
@@ -263,10 +285,13 @@ export const updateAssignment = async (req, res) => {
       await Question.bulkCreate(questionData, { transaction: t });
     }
 
-    // --- Bước 3: Cập nhật Submissions (nếu thay đổi danh sách học sinh) ---
-    // Xóa submissions cũ
+    // --- Bước 3: Cập nhật Submissions (CHỈ khi chưa có ai nộp bài) ---
+    // Xóa submissions cũ (chỉ những cái chưa nộp)
     await AssignmentSubmission.destroy({
-      where: { assignmentId: id },
+      where: { 
+        assignmentId: id,
+        status: { [Op.in]: ['assigned', 'in_progress'] }
+      },
       transaction: t,
     });
 
@@ -315,18 +340,24 @@ export const updateAssignment = async (req, res) => {
     res.send({ message: "Cập nhật bài tập thành công!", id: assignment.id });
   } catch (error) {
     await t.rollback();
-    console.error(error);
+    console.error("Error updating assignment:", error);
     res.status(500).send({ message: "Lỗi server: " + error.message });
   }
 };
 
-// --- 4. XÓA BÀI TẬP (GIÁO VIÊN) ---
+// --- 4. XÓA BÀI TẬP (GIÁO VIÊN) - IMPROVED ---
 export const deleteAssignment = async (req, res) => {
   const t = await sequelize.transaction();
 
   try {
     const { id } = req.params; // ID bài tập cần xóa
-    const { userId } = req.body; // ID giáo viên (để kiểm tra quyền)
+    // Lấy userId từ query params thay vì body cho DELETE request
+    const userId = req.query.userId || req.body.userId;
+
+    if (!userId) {
+      await t.rollback();
+      return res.status(400).send({ message: "userId là bắt buộc" });
+    }
 
     // --- Tìm bài tập ---
     const assignment = await Assignment.findByPk(id, { transaction: t });
@@ -336,28 +367,348 @@ export const deleteAssignment = async (req, res) => {
     }
 
     // --- Kiểm tra quyền sở hữu ---
-    if (userId && assignment.userId !== userId) {
+    if (assignment.userId !== parseInt(userId)) {
       await t.rollback();
       return res.status(403).send({ message: "Bạn không có quyền xóa bài tập này" });
     }
 
-    // --- Xóa Submissions ---
+    // --- Kiểm tra xem có submissions đã nộp chưa ---
+    const submittedCount = await AssignmentSubmission.count({
+      where: { 
+        assignmentId: id,
+        status: 'submitted'
+      },
+      transaction: t
+    });
+
+    if (submittedCount > 0) {
+      await t.rollback();
+      return res.status(400).send({ 
+        message: `Không thể xóa bài tập đã có ${submittedCount} học sinh nộp bài. Bạn có thể ẩn bài tập này thay vì xóa.` 
+      });
+    }
+
+    // --- Lấy thống kê trước khi xóa ---
+    const totalSubmissions = await AssignmentSubmission.count({
+      where: { assignmentId: id },
+      transaction: t
+    });
+
+    const questionsCount = await Question.count({
+      where: { assignmentId: id },
+      transaction: t
+    });
+
+    // --- Xóa theo thứ tự (foreign key constraints) ---
+    // 1. Xóa Submissions trước
     await AssignmentSubmission.destroy({
       where: { assignmentId: id },
       transaction: t,
     });
 
-    // --- Xóa Questions ---
+    // 2. Xóa Questions
     await Question.destroy({
       where: { assignmentId: id },
       transaction: t,
     });
 
-    // --- Xóa Assignment ---
+    // 3. Xóa Assignment
     await assignment.destroy({ transaction: t });
 
     await t.commit();
-    res.send({ message: "Xóa bài tập thành công!" });
+    
+    res.send({ 
+      message: "Xóa bài tập thành công!",
+      deletedData: {
+        assignmentId: id,
+        questionsDeleted: questionsCount,
+        submissionsDeleted: totalSubmissions
+      }
+    });
+  } catch (error) {
+    await t.rollback();
+    console.error("Error deleting assignment:", error);
+    res.status(500).send({ message: "Lỗi server: " + error.message });
+  }
+};
+
+// --- 5. LẤY DANH SÁCH BÀI TẬP (Của Học sinh) ---
+export const getStudentAssignments = async (req, res) => {
+  try {
+    const userId = req.query.userId; // ID học sinh
+    
+    if (!userId) {
+      return res.status(400).send({ message: "userId is required" });
+    }
+
+    const assignments = await AssignmentSubmission.findAll({
+      where: { userId: userId },
+      include: [
+        {
+          model: Assignment,
+          as: "assignment",
+          attributes: ["id", "title", "description", "deadline", "score"],
+          include: [
+            {
+              model: Question,
+              as: "questions",
+              attributes: ["id", "text", "type", "score"],
+            },
+          ],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+
+    // Format dữ liệu để FE dễ xử lý
+    const responseData = assignments.map((submission) => {
+      const assignment = submission.assignment;
+      const now = new Date();
+      const deadline = new Date(assignment.deadline);
+      const isOverdue = now > deadline;
+      
+      // Tính thời gian còn lại
+      const timeDiff = deadline - now;
+      let remainingTime = "Đã hết hạn";
+      
+      if (!isOverdue) {
+        const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        
+        if (days > 0) {
+          remainingTime = `${days} ngày`;
+        } else if (hours > 0) {
+          remainingTime = `${hours} giờ`;
+        } else {
+          remainingTime = "Dưới 1 giờ";
+        }
+      }
+
+      // Tính progress dựa trên status
+      let progress = 0;
+      if (submission.status === "submitted") progress = 100;
+      else if (submission.status === "in_progress") progress = 50;
+      else if (submission.status === "assigned") progress = 0;
+
+      return {
+        id: assignment.id,
+        title: assignment.title,
+        description: assignment.description,
+        deadline: assignment.deadline,
+        totalScore: assignment.score,
+        submissionId: submission.id,
+        status: submission.status,
+        submittedAt: submission.submittedAt,
+        score: submission.score,
+        remainingTime,
+        progress,
+        isOverdue,
+        questionCount: assignment.questions ? assignment.questions.length : 0,
+      };
+    });
+
+    res.send(responseData);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: error.message });
+  }
+};
+
+// --- 6. LẤY CHI TIẾT BÀI TẬP VÀ CÂU HỎI (Để học sinh làm bài) ---
+export const getAssignmentDetails = async (req, res) => {
+  try {
+    const { id } = req.params; // ID assignment
+    const { userId } = req.query; // ID học sinh
+    
+    if (!userId) {
+      return res.status(400).send({ message: "userId is required" });
+    }
+
+    // Kiểm tra xem học sinh có được giao bài này không
+    const submission = await AssignmentSubmission.findOne({
+      where: { 
+        assignmentId: id,
+        userId: userId 
+      }
+    });
+
+    if (!submission) {
+      return res.status(403).send({ message: "Bạn không có quyền truy cập bài tập này" });
+    }
+
+    // Lấy thông tin bài tập và câu hỏi
+    const assignment = await Assignment.findByPk(id, {
+      include: [
+        {
+          model: Question,
+          as: "questions",
+          attributes: ["id", "text", "type", "score"],
+        },
+      ],
+    });
+
+    if (!assignment) {
+      return res.status(404).send({ message: "Không tìm thấy bài tập" });
+    }
+
+    // Parse câu hỏi trắc nghiệm (loại bỏ đáp án đúng)
+    const questionsForStudent = assignment.questions.map((q) => {
+      if (q.type === "Tno") {
+        try {
+          const content = JSON.parse(q.text);
+          return {
+            id: q.id,
+            text: content.prompt,
+            type: q.type,
+            score: q.score,
+            options: content.options.map((opt) => ({
+              id: opt.id,
+              text: opt.text,
+              // Không gửi isCorrect cho học sinh
+            })),
+          };
+        } catch (e) {
+          return {
+            id: q.id,
+            text: q.text,
+            type: q.type,
+            score: q.score,
+          };
+        }
+      } else {
+        return {
+          id: q.id,
+          text: q.text,
+          type: q.type,
+          score: q.score,
+        };
+      }
+    });
+
+    res.send({
+      assignment: {
+        id: assignment.id,
+        title: assignment.title,
+        description: assignment.description,
+        deadline: assignment.deadline,
+        score: assignment.score,
+      },
+      questions: questionsForStudent,
+      submission: {
+        id: submission.id,
+        status: submission.status,
+        submittedAt: submission.submittedAt,
+        score: submission.score,
+        answers: submission.answers ? JSON.parse(submission.answers) : null,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: error.message });
+  }
+};
+
+// --- 7. NỘP BÀI TẬP ---
+export const submitAssignment = async (req, res) => {
+  const t = await sequelize.transaction();
+
+  try {
+    const { id } = req.params; // ID assignment
+    const { userId, answers } = req.body; // ID học sinh và câu trả lời
+    
+    // answers format: [{ questionId: 1, answer: "option_id" hoặc "text" }, ...]
+
+    if (!userId || !answers) {
+      await t.rollback();
+      return res.status(400).send({ message: "userId và answers là bắt buộc" });
+    }
+
+    // Tìm submission
+    const submission = await AssignmentSubmission.findOne({
+      where: { 
+        assignmentId: id,
+        userId: userId 
+      },
+      transaction: t
+    });
+
+    if (!submission) {
+      await t.rollback();
+      return res.status(403).send({ message: "Không tìm thấy bài tập được giao" });
+    }
+
+    // Kiểm tra deadline
+    const assignment = await Assignment.findByPk(id, {
+      include: [
+        {
+          model: Question,
+          as: "questions",
+        },
+      ],
+      transaction: t
+    });
+
+    const now = new Date();
+    const deadline = new Date(assignment.deadline);
+    if (now > deadline) {
+      await t.rollback();
+      return res.status(400).send({ message: "Đã quá hạn nộp bài" });
+    }
+
+    // Tính điểm tự động cho câu trắc nghiệm
+    let totalScore = 0;
+    const gradedAnswers = [];
+
+    for (const userAnswer of answers) {
+      const question = assignment.questions.find(q => q.id === userAnswer.questionId);
+      if (!question) continue;
+
+      let isCorrect = false;
+      let earnedScore = 0;
+
+      if (question.type === "Tno") {
+        try {
+          const content = JSON.parse(question.text);
+          const correctOption = content.options.find(opt => opt.isCorrect);
+          if (correctOption && correctOption.id == userAnswer.answer) {
+            isCorrect = true;
+            earnedScore = question.score;
+          }
+        } catch (e) {
+          console.error("Error parsing question content:", e);
+        }
+      } else {
+        // Câu tự luận - cần chấm thủ công, tạm thời để null
+        earnedScore = null;
+      }
+
+      gradedAnswers.push({
+        questionId: userAnswer.questionId,
+        answer: userAnswer.answer,
+        isCorrect,
+        earnedScore,
+      });
+
+      if (earnedScore !== null) {
+        totalScore += earnedScore;
+      }
+    }
+
+    // Cập nhật submission
+    await submission.update({
+      status: "submitted",
+      submittedAt: new Date(),
+      answers: JSON.stringify(gradedAnswers),
+      score: totalScore, // Chỉ tính điểm trắc nghiệm, câu tự luận chấm sau
+    }, { transaction: t });
+
+    await t.commit();
+    
+    res.send({ 
+      message: "Nộp bài thành công!",
+      score: totalScore,
+      submissionId: submission.id
+    });
   } catch (error) {
     await t.rollback();
     console.error(error);
@@ -365,9 +716,34 @@ export const deleteAssignment = async (req, res) => {
   }
 };
 
-// --- 5. LẤY DANH SÁCH BÀI TẬP (Của Học sinh) ---
+// --- 8. LƯU BÀI TẠM THỜI (DRAFT) ---
+export const saveDraft = async (req, res) => {
+  try {
+    const { id } = req.params; // ID assignment
+    const { userId, answers } = req.body;
 
-// Nop bai tap
+    const submission = await AssignmentSubmission.findOne({
+      where: { 
+        assignmentId: id,
+        userId: userId 
+      }
+    });
 
+    if (!submission) {
+      return res.status(403).send({ message: "Không tìm thấy bài tập được giao" });
+    }
+
+    // Lưu answers tạm thời
+    await submission.update({
+      status: "in_progress",
+      answers: JSON.stringify(answers),
+    });
+
+    res.send({ message: "Đã lưu bản nháp" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: error.message });
+  }
+};
 
 
