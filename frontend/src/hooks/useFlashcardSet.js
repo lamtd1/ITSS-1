@@ -12,8 +12,16 @@ export const useFlashcardSet = (setId, baseUrl) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+          setError('認証が必要です');
+          setLoading(false);
+          return;
+        }
         // Fetch set info
-        const setResponse = await fetch(`${baseUrl}/api/flashcards/sets/${setId}`);
+        const setResponse = await fetch(`${baseUrl}/api/flashcards/sets/${setId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         const setData = await setResponse.json();
         
         if (!setData.success) {
@@ -23,7 +31,9 @@ export const useFlashcardSet = (setId, baseUrl) => {
         setSet(setData.data);
 
         // Fetch cards
-        const cardsResponse = await fetch(`${baseUrl}/api/flashcards/sets/${setId}/cards`);
+        const cardsResponse = await fetch(`${baseUrl}/api/flashcards/sets/${setId}/cards`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         const cardsData = await cardsResponse.json();
         
         if (cardsData.success) {
