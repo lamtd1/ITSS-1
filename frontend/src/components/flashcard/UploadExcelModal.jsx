@@ -127,7 +127,7 @@ const UploadExcelModal = ({ isOpen, onClose, onImported }) => {
       <div className="bg-white w-[95%] max-w-xl rounded-xl p-6 shadow-lg">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-semibold">ExcelでFlashcardセットを追加</h3>
-          <button className="material-symbols-outlined" onClick={onClose}>close</button>
+          {/* Removed X close button to use Cancel only */}
         </div>
 
         <div className="space-y-3">
