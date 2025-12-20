@@ -1,7 +1,7 @@
--- 1. Thêm dữ liệu vào bảng Role (2 quyền: GV và HS)
+-- 1. Thêm dữ liệu vào bảng Role (2 quyền: Admin và User)
 INSERT INTO "Role" (role_name, role_description) VALUES 
-('Teacher', 'Giáo viên - Có quyền tạo nội dung'), -- ID sẽ là 1
-('Student', 'Học sinh - Có quyền học tập');      -- ID sẽ là 2
+('Admin', 'Quản trị viên - Có quyền quản lý và tạo nội dung'), -- ID sẽ là 1
+('Student', 'Học sinh - Quyền sử dụng và tra cứu');            -- ID sẽ là 2
 
 -- 2. Thêm dữ liệu vào bảng Permission (4 quyền)
 INSERT INTO "Permission" (permission_name, permission_description) VALUES 
@@ -10,43 +10,40 @@ INSERT INTO "Permission" (permission_name, permission_description) VALUES
 ('search', 'Quyền tra cứu thông tin'),             -- ID 3 (Chung)
 ('use_flashcard', 'Quyền sử dụng Flashcard');      -- ID 4 (Chung)
 
--- 3. Phân quyền cho Role (Cần bảng Role_Permission để liên kết)
 INSERT INTO "Role_Permission" (role_id, permission_id) VALUES
--- Quyền cho Giáo Viên (Có tất cả các quyền hoặc chỉ quyền quản lý + quyền chung)
-(1, 1), -- GV được tạo slide
-(1, 2), -- GV được tạo câu hỏi
-(1, 3), -- GV được tra cứu
-(1, 4), -- GV được dùng flashcard
+-- Quyền cho Admin (được tất cả quyền)
+(1, 1), -- Admin được tạo slide
+(1, 2), -- Admin được tạo câu hỏi
+(1, 3), -- Admin được tra cứu
+(1, 4), -- Admin được dùng flashcard
 
--- Quyền cho Học Sinh (Chỉ có quyền chung)
-(2, 3), -- HS được tra cứu
-(2, 4); -- HS được dùng flashcard
+-- Quyền cho User (chỉ quyền chung)
+(2, 3), -- User được tra cứu
+(2, 4); -- User được dùng flashcard
 
--- 4. Thêm dữ liệu vào bảng User (2 GV và 10 HS)
 INSERT INTO "User" (user_name, user_email, user_password, user_phone) VALUES 
--- 2 Giáo viên
-('Nguyen Van GV1', 'gv1@school.edu.vn', 'password123', '0901111111'), -- User ID 1
-('Tran Thi GV2', 'gv2@school.edu.vn', 'password123', '0902222222'),   -- User ID 2
+-- 2 Admin (bcrypt hashed 'password123')
+('Admin One', 'admin1@school.edu.vn', '$2b$10$m2/S9QNSxmZSvVLxwvn5zOvromoZej.1N8T7B0l0Kd7lhftI8LQ8O', '0901111111'), -- User ID 1
+('Admin Two', 'admin2@school.edu.vn', '$2b$10$m2/S9QNSxmZSvVLxwvn5zOvromoZej.1N8T7B0l0Kd7lhftI8LQ8O', '0902222222'), -- User ID 2
 
--- 10 Học sinh
-('Hoc Sinh A', 'hs1@school.edu.vn', 'pass123', '0911111111'), -- User ID 3
-('Hoc Sinh B', 'hs2@school.edu.vn', 'pass123', '0911111112'), -- User ID 4
-('Hoc Sinh C', 'hs3@school.edu.vn', 'pass123', '0911111113'), -- User ID 5
-('Hoc Sinh D', 'hs4@school.edu.vn', 'pass123', '0911111114'), -- User ID 6
-('Hoc Sinh E', 'hs5@school.edu.vn', 'pass123', '0911111115'), -- User ID 7
-('Hoc Sinh F', 'hs6@school.edu.vn', 'pass123', '0911111116'), -- User ID 8
-('Hoc Sinh G', 'hs7@school.edu.vn', 'pass123', '0911111117'), -- User ID 9
-('Hoc Sinh H', 'hs8@school.edu.vn', 'pass123', '0911111118'), -- User ID 10
-('Hoc Sinh I', 'hs9@school.edu.vn', 'pass123', '0911111119'), -- User ID 11
-('Hoc Sinh K', 'hs10@school.edu.vn', 'pass123', '0911111120'); -- User ID 12
+-- 10 Học sinh (bcrypt hashed 'pass123')
+('Hoc Sinh A', 'hs1@school.edu.vn', '$2b$10$9eqxbiMgxYCJ/LYLag7tF.2H.3pvHQ/pQ7Tv5xPffmjZKXlihP4.W', '0911111111'), -- User ID 3
+('Hoc Sinh B', 'hs2@school.edu.vn', '$2b$10$9eqxbiMgxYCJ/LYLag7tF.2H.3pvHQ/pQ7Tv5xPffmjZKXlihP4.W', '0911111112'), -- User ID 4
+('Hoc Sinh C', 'hs3@school.edu.vn', '$2b$10$9eqxbiMgxYCJ/LYLag7tF.2H.3pvHQ/pQ7Tv5xPffmjZKXlihP4.W', '0911111113'), -- User ID 5
+('Hoc Sinh D', 'hs4@school.edu.vn', '$2b$10$9eqxbiMgxYCJ/LYLag7tF.2H.3pvHQ/pQ7Tv5xPffmjZKXlihP4.W', '0911111114'), -- User ID 6
+('Hoc Sinh E', 'hs5@school.edu.vn', '$2b$10$9eqxbiMgxYCJ/LYLag7tF.2H.3pvHQ/pQ7Tv5xPffmjZKXlihP4.W', '0911111115'), -- User ID 7
+('Hoc Sinh F', 'hs6@school.edu.vn', '$2b$10$9eqxbiMgxYCJ/LYLag7tF.2H.3pvHQ/pQ7Tv5xPffmjZKXlihP4.W', '0911111116'), -- User ID 8
+('Hoc Sinh G', 'hs7@school.edu.vn', '$2b$10$9eqxbiMgxYCJ/LYLag7tF.2H.3pvHQ/pQ7Tv5xPffmjZKXlihP4.W', '0911111117'), -- User ID 9
+('Hoc Sinh H', 'hs8@school.edu.vn', '$2b$10$9eqxbiMgxYCJ/LYLag7tF.2H.3pvHQ/pQ7Tv5xPffmjZKXlihP4.W', '0911111118'), -- User ID 10
+('Hoc Sinh I', 'hs9@school.edu.vn', '$2b$10$9eqxbiMgxYCJ/LYLag7tF.2H.3pvHQ/pQ7Tv5xPffmjZKXlihP4.W', '0911111119'), -- User ID 11
+('Hoc Sinh K', 'hs10@school.edu.vn', '$2b$10$9eqxbiMgxYCJ/LYLag7tF.2H.3pvHQ/pQ7Tv5xPffmjZKXlihP4.W', '0911111120'); -- User ID 12
 
--- 5. Gán User vào Role (Bảng User_Role)
 INSERT INTO "User_Role" (user_id, role_id) VALUES
--- Gán 2 GV
+-- Gán 2 Admin
 (1, 1),
 (2, 1),
 
--- Gán 10 HS
+-- Gán 10 User
 (3, 2),
 (4, 2),
 (5, 2),
@@ -62,42 +59,41 @@ INSERT INTO "User_Role" (user_id, role_id) VALUES
 -- 6. THÊM DỮ LIỆU FLASHCARD (MỚI)
 --------------------------------------------------------------------------
 
--- 6a. Thêm dữ liệu vào bảng Flashcard_Set (Tạo 12 bộ thẻ cho 12 User)
 INSERT INTO "Flashcard_Set" (user_id, set_title, set_description) VALUES
--- User 1 (Teacher)
+-- User 1 (Admin)
 (1, 'Từ vựng CNTT', 'Các từ vựng chuyên ngành công nghệ thông tin cơ bản'), -- Set ID 1
 
--- User 2 (Teacher)
+-- User 2 (Admin)
 (2, 'Từ vựng Trường học', 'Đồ dùng và các danh từ trong lớp học'),           -- Set ID 2
 
--- User 3 (Student)
+-- User 3 (User)
 (3, 'Chào hỏi cơ bản', 'Những câu chào hỏi thường dùng hàng ngày'),          -- Set ID 3
 
--- User 4 (Student)
+-- User 4 (User)
 (4, 'Đồ dùng học tập', 'Các vật dụng văn phòng phẩm'),                       -- Set ID 4
 
--- User 5 (Student)
+-- User 5 (User)
 (5, 'Gia đình', 'Cách gọi tên các thành viên trong gia đình'),               -- Set ID 5
 
--- User 6 (Student)
+-- User 6 (User)
 (6, 'Động vật', 'Tên các loài động vật thân thuộc'),                         -- Set ID 6
 
--- User 7 (Student)
+-- User 7 (User)
 (7, 'Màu sắc', 'Danh sách các màu cơ bản'),                                  -- Set ID 7
 
--- User 8 (Student)
+-- User 8 (User)
 (8, 'Số đếm', 'Đếm số từ 1 đến 5'),                                          -- Set ID 8
 
--- User 9 (Student)
+-- User 9 (User)
 (9, 'Động từ cơ bản 1', 'Các động từ di chuyển và ăn uống'),                 -- Set ID 9
 
--- User 10 (Student)
+-- User 10 (User)
 (10, 'Động từ cơ bản 2', 'Các động từ tri giác và giao tiếp'),               -- Set ID 10
 
--- User 11 (Student)
+-- User 11 (User)
 (11, 'Thời gian', 'Các mốc thời gian trong ngày'),                           -- Set ID 11
 
--- User 12 (Student)
+-- User 12 (User)
 (12, 'Phương tiện', 'Các phương tiện giao thông phổ biến');                  -- Set ID 12
 
 

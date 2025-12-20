@@ -1,6 +1,12 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+// Validate required JWT secrets early to avoid runtime errors
+if (!process.env.JWT_SECRET || !process.env.JWT_REFRESH_SECRET) {
+  console.error('[CONFIG ERROR] Missing JWT secrets. Please set JWT_SECRET and JWT_REFRESH_SECRET in backend/.env');
+  process.exit(1);
+}
+
 const PORT = process.env.PORT;
 const MONGO_URI = process.env.MONGO_URI;
 
@@ -30,18 +36,21 @@ sequelize.sync({ alter: true })
   .then(async () => {
     console.log('Đã đồng bộ Database!');
 
-    // Seed data 
+    // Seed data (idempotent) for Roles
     try {
-      const userRole = await Role.findOne({ where: { name: 'User' } });
-      if (!userRole) {
-        await Role.bulkCreate([
-          { name: 'User', description: 'Người dùng cơ bản' },
-          { name: 'Admin', description: 'Quản trị viên hệ thống' }
-        ]);
-        console.log('Đã tạo dữ liệu mẫu cho bảng Role');
-      }
+      const [adminRole, createdAdmin] = await Role.findOrCreate({
+        where: { name: 'Admin' },
+        defaults: { description: 'Quản trị viên hệ thống' }
+      });
+      if (createdAdmin) console.log('Đã tạo Role: Admin');
 
-      // Seed Users
+      const [studentRole, createdStudent] = await Role.findOrCreate({
+        where: { name: 'Student' },
+        defaults: { description: 'Học sinh - Quyền sử dụng và tra cứu' }
+      });
+      if (createdStudent) console.log('Đã tạo Role: Student');
+
+      // Seed Users (example IDs)
       const User = sequelize.models.User;
       const adminUser = await User.findByPk(1);
       if (!adminUser) {

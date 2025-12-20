@@ -48,8 +48,14 @@ const StudentFlashcardLearn = () => {
   const handleMarkAsLearned = async () => {
     try {
       const currentCard = cards[currentIndex];
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        alert('ログインが必要です');
+        return;
+      }
       const response = await fetch(`${baseUrl}/api/flashcards/cards/${currentCard.id}/toggle-learned`, {
-        method: 'PATCH'
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}` }
       });
       
       const data = await response.json();
@@ -71,8 +77,14 @@ const StudentFlashcardLearn = () => {
 
   const handleUnmarkAsLearned = async (cardId) => {
     try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        alert('ログインが必要です');
+        return;
+      }
       const response = await fetch(`${baseUrl}/api/flashcards/cards/${cardId}/toggle-learned`, {
-        method: 'PATCH'
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}` }
       });
       
       const data = await response.json();
@@ -95,10 +107,17 @@ const StudentFlashcardLearn = () => {
 
     setIsSubmitting(true);
     try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        alert('ログインが必要です');
+        setIsSubmitting(false);
+        return;
+      }
       const response = await fetch(`${baseUrl}/api/flashcards/sets/${setId}/cards`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           front: newCardFront.trim(),
@@ -170,6 +189,7 @@ const StudentFlashcardLearn = () => {
     <div className="max-w-4xl mx-auto space-y-6">
       <LearningHeader
         setTitle={set?.title}
+        setDescription={set?.description}
         learnedCount={learnedCount}
         totalCards={totalCards}
         onBack={() => navigate('/student/flashcards')}

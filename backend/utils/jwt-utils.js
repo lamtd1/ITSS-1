@@ -1,8 +1,9 @@
 import jwt from "jsonwebtoken";
 
 export const generateAccessToken = (userId, email, roles) => {
+  const expires = process.env.JWT_EXPIRES_IN || process.env.ACCESS_TOKEN_EXPIRE || "15m";
   return jwt.sign({ id: userId, email, roles }, process.env.JWT_SECRET, {
-    expiresIn: process.env.ACCESS_TOKEN_EXPIRE || "15m",
+    expiresIn: expires,
   });
 };
 

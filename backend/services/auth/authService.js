@@ -22,7 +22,7 @@ export const registerUser = async (userData) => {
 
   //Gán Role mặc định
   //đảm bảo trong DB bảng Role đã có role này rồi
-  const defaultRole = await Role.findOne({ where: { name: 'User' } }); 
+  const defaultRole = await Role.findOne({ where: { name: 'Student' } }); 
   
   if (defaultRole) {
     await user.addRole(defaultRole); 

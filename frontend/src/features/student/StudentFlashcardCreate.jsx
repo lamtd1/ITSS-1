@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Card from '../../components/common/Card.jsx';
 import Button from '../../components/common/Button.jsx';
 import CreateSetModal from '../../components/flashcard/CreateSetModal.jsx';
+import UploadExcelModal from '../../components/flashcard/UploadExcelModal.jsx';
 
 const StudentFlashcardCreate = () => {
   const navigate = useNavigate();
@@ -11,9 +12,11 @@ const StudentFlashcardCreate = () => {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
   const [newSetTitle, setNewSetTitle] = useState('');
   const [newSetDescription, setNewSetDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [reload, setReload] = useState(0);
 
   const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -21,13 +24,23 @@ const StudentFlashcardCreate = () => {
   useEffect(() => {
     const fetchSets = async () => {
       try {
-        const response = await fetch(`${baseUrl}/api/flashcards/sets`);
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+          setError('認証が必要です');
+          setLoading(false);
+          return;
+        }
+        const response = await fetch(`${baseUrl}/api/flashcards/sets`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         const data = await response.json();
         if (data.success) {
           // Fetch card counts for each set
           const setsWithCounts = await Promise.all(
             data.data.map(async (set) => {
-              const cardsResponse = await fetch(`${baseUrl}/api/flashcards/sets/${set.id}/cards`);
+              const cardsResponse = await fetch(`${baseUrl}/api/flashcards/sets/${set.id}/cards`, {
+                headers: { Authorization: `Bearer ${token}` }
+              });
               const cardsData = await cardsResponse.json();
               const cards = cardsData.success ? cardsData.data : [];
               const learnedCount = cards.filter(c => c.isLearned).length;
@@ -51,7 +64,7 @@ const StudentFlashcardCreate = () => {
     };
 
     fetchSets();
-  }, [baseUrl]);
+  }, [baseUrl, reload]);
 
   const handleSetClick = (setId) => {
     navigate(`/student/flashcards/learn/${setId}`);
@@ -67,10 +80,17 @@ const StudentFlashcardCreate = () => {
 
     setIsSubmitting(true);
     try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        alert('ログインが必要です');
+        setIsSubmitting(false);
+        return;
+      }
       const response = await fetch(`${baseUrl}/api/flashcards/sets`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           title: newSetTitle.trim(),
@@ -135,10 +155,16 @@ const StudentFlashcardCreate = () => {
           <h2 className="text-2xl font-bold text-gray-900">フラッシュカード作成</h2>
           <p className="text-gray-500">単語を復習するためのカードセットを作成・管理します。</p>
         </div>
-        <Button className="shrink-0" onClick={() => setShowCreateModal(true)}>
-            <span className="material-symbols-outlined mr-1">add</span> 
-            Flashcardセットを作成
-        </Button>
+        <div className="flex gap-2 shrink-0">
+          <Button onClick={() => setShowCreateModal(true)}>
+            <span className="material-symbols-outlined mr-1">add</span>
+            新しいセットを作成
+          </Button>
+          <Button onClick={() => setShowUploadModal(true)}>
+            <span className="material-symbols-outlined mr-1">upload_file</span> 
+            Excelでフラッシュカードセットを追加
+          </Button>
+        </div>
       </div>
 
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex gap-4">
@@ -179,6 +205,9 @@ const StudentFlashcardCreate = () => {
                 </div>
                 <div>
                     <h3 className="text-xl font-bold text-gray-800 mb-1 group-hover:text-blue-600 transition-colors">{set.title}</h3>
+                    {set.description && (
+                      <p className="text-sm text-gray-500 line-clamp-2 mb-1">{set.description}</p>
+                    )}
                     <p className="text-sm text-gray-500">{set.count} 単語</p>
                 </div>
                 
@@ -209,6 +238,16 @@ const StudentFlashcardCreate = () => {
         onTitleChange={(e) => setNewSetTitle(e.target.value)}
         onDescriptionChange={(e) => setNewSetDescription(e.target.value)}
         isSubmitting={isSubmitting}
+      />
+
+      <UploadExcelModal
+        isOpen={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        onImported={({ setId, count, title }) => {
+          // Refetch sets to update counts and progress accurately
+          setReload(r => r + 1);
+          alert(`新しいセット（ID: ${setId}）を作成し、${count}枚のカードを追加しました！`);
+        }}
       />
     </div>
   );
