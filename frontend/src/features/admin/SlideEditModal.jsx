@@ -51,9 +51,7 @@ const SlideEditModal = ({ slide, onClose, onUpdate }) => {
             <div className="bg-white rounded-xl w-full max-w-lg shadow-2xl overflow-hidden">
                 <div className="p-4 border-b flex justify-between items-center">
                     <h3 className="font-bold text-gray-800 text-lg">スライド編集</h3>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-                        <span className="material-symbols-outlined">close</span>
-                    </button>
+                    {/* Removed X close button to use Cancel only */}
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">

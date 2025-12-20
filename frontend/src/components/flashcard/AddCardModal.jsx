@@ -23,12 +23,7 @@ const AddCardModal = ({
         {/* Modal Header */}
         <div className="flex items-center justify-between p-6 border-b">
           <h3 className="text-xl font-bold text-gray-800">新しいカードを追加</h3>
-          <button
-            onClick={handleClose}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            <span className="material-symbols-outlined">close</span>
-          </button>
+          {/* Removed X close button to use Cancel only */}
         </div>
 
         {/* Modal Body */}
