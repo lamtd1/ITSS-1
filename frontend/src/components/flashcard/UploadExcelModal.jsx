@@ -185,7 +185,7 @@ const UploadExcelModal = ({ isOpen, onClose, onImported }) => {
 
           <div className="flex justify-end gap-2 mt-4">
             <Button onClick={onClose} className="bg-gray-200 text-gray-800">キャンセル</Button>
-            <Button onClick={handleSubmit} disabled={isSubmitting || isParsing}>
+            <Button onClick={handleSubmit} disabled={isSubmitting || isParsing || rows.length === 0}>
               {isSubmitting ? 'インポート中…' : 'インポート'}
             </Button>
           </div>
