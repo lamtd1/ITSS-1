@@ -10,12 +10,7 @@ const LearnedCardsModal = ({ isOpen, onClose, learnedCards, onUnmarkCard }) => {
         {/* Modal Header */}
         <div className="flex items-center justify-between p-6 border-b">
           <h3 className="text-xl font-bold text-gray-800">習得済みカード</h3>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            <span className="material-symbols-outlined">close</span>
-          </button>
+          {/* Removed X close button to use Cancel only */}
         </div>
 
         {/* Modal Body */}
