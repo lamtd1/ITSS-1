@@ -90,7 +90,7 @@ export const createAssignment = async (req, res) => {
           {
             model: (await import("../models/index.js")).Role, // Dynamic import để tránh circular dependency nếu có
             as: "roles",
-            where: { role_name: "User" },
+            where: { name: "Student" },
           },
         ],
         attributes: ["id"],
@@ -304,7 +304,7 @@ export const updateAssignment = async (req, res) => {
           {
             model: (await import("../models/index.js")).Role,
             as: "roles",
-            where: { role_name: "User" },
+            where: { name: "Student" },
           },
         ],
         attributes: ["id"],
