@@ -5,7 +5,7 @@ import Card from '../../components/common/Card.jsx';
 import Button from '../../components/common/Button.jsx';
 
 const baseBackendURL = 'http://localhost:5001/api';
-const CURRENT_STUDENT_ID = 1; // TODO: Lấy từ context/auth
+const CURRENT_STUDENT_ID = 3; // TODO: Lấy từ context/auth
 
 const StudentAssignmentList = () => {
   const navigate = useNavigate();

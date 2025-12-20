@@ -457,7 +457,7 @@ export const getStudentAssignments = async (req, res) => {
           ],
         },
       ],
-      order: [["createdAt", "DESC"]],
+      order: [["submittedAt", "DESC"]],
     });
 
     // Format dữ liệu để FE dễ xử lý
