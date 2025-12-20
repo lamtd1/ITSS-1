@@ -7,7 +7,8 @@ import {
   getStudentAssignments,
   getAssignmentDetails,
   submitAssignment,
-  saveDraft
+  saveDraft,
+  getTeacherAssignmentById
 } from '../controllers/assignmentController.js';
 
 const router = express.Router();
@@ -30,5 +31,5 @@ router.get('/student', getStudentAssignments);
 router.get('/:id/details', getAssignmentDetails); 
 router.post('/:id/submit', submitAssignment);
 router.post('/:id/draft', saveDraft);
-
+router.get('/:id/teacher-detail', getTeacherAssignmentById);
 export default router;

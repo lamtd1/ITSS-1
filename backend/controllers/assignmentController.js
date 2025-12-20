@@ -747,3 +747,54 @@ export const saveDraft = async (req, res) => {
 };
 
 
+export const getTeacherAssignmentById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    // Lưu ý: Cần thêm logic kiểm tra userId ở đây nếu muốn bảo mật chặt chẽ hơn
+
+    const assignment = await Assignment.findByPk(id, {
+      include: [
+        {
+          model: Question,
+          as: "questions",
+        },
+      ],
+    });
+
+    if (!assignment) {
+      return res.status(404).send({ message: "Không tìm thấy bài tập" });
+    }
+
+    // Parse nội dung câu hỏi từ JSON string sang Object để FE hiển thị
+    const formattedQuestions = assignment.questions.map((q) => {
+      let parsedText = q.text;
+      let options = [];
+      
+      if (q.type === "Tno") {
+        try {
+          const contentObj = JSON.parse(q.text);
+          parsedText = contentObj.prompt; // Lấy câu hỏi
+          options = contentObj.options;   // Lấy options (gồm cả isCorrect)
+        } catch (e) {
+          console.error("Error parsing question JSON", e);
+        }
+      }
+
+      return {
+        id: q.id,
+        text: parsedText,
+        type: q.type,
+        score: q.score,
+        options: options, // Trả về full options để giáo viên sửa
+      };
+    });
+
+    res.send({
+      ...assignment.toJSON(),
+      questions: formattedQuestions,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: error.message });
+  }
+};

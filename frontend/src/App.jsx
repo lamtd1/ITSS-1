@@ -56,7 +56,8 @@ const App = () => {
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="slides" element={<AdminSlideUpload />} />
           <Route path="assignments" element={<AdminAssignmentList />} /> {/* Danh sách */}
-          <Route path="assignments/create" element={<AdminAssignmentCreate />} /> {/* Tạo mới */}
+          <Route path="assignments/create" element={<AdminAssignmentCreate />} /> 
+          <Route path="/admin/assignments/edit/:id" element={<AdminAssignmentCreate />} />
           <Route path="students" element={<AdminStudentManage />} />
         </Route>
 
