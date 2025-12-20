@@ -3,6 +3,7 @@ import Button from '../../components/common/Button.jsx';
 
 const LearningHeader = ({ 
   setTitle, 
+  setDescription,
   learnedCount, 
   totalCards, 
   onBack, 
@@ -20,6 +21,9 @@ const LearningHeader = ({
           戻る
         </button>
         <h2 className="text-2xl font-bold text-gray-800">{setTitle}</h2>
+        {setDescription && (
+          <p className="text-gray-600 text-sm mt-1">{setDescription}</p>
+        )}
         <p className="text-gray-500 text-sm">
           進捗: {learnedCount} / {totalCards} カード習得済み
         </p>
