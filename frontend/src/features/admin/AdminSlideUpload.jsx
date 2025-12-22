@@ -21,7 +21,7 @@ const AdminSlideUpload = () => {
   // Fetch slides for management
   const fetchSlides = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/slides', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/slides`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -122,7 +122,7 @@ const AdminSlideUpload = () => {
         headers['Content-Type'] = 'application/json';
       }
 
-      const response = await fetch('http://localhost:5000/api/slides', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/slides`, {
         method: 'POST',
         headers: headers,
         body: body,
@@ -153,7 +153,7 @@ const AdminSlideUpload = () => {
     if (!window.confirm('本当にこのスライドを削除しますか？')) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/api/slides/${id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/slides/${id}`, {
         method: 'DELETE',
       });
 

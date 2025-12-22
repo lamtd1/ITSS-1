@@ -14,12 +14,18 @@ import express from 'express';
 import cors from 'cors';
 import { sequelize } from './models/index.js';
 import authRoutes from './routes/authRoutes.js';
+import assignmentRoutes from './routes/assignmentRoutes.js';
 import slideRoutes from './routes/slideRoutes.js';
 import flashcardRoutes from './routes/flashcardRoutes.js';
 import Role from './models/auth/Role.js';
 
+
 const app = express();
-app.use(cors()); // Allow all origins for debugging
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true
+}));
+
 app.use((req, res, next) => {
   console.log(`[DEBUG] Received ${req.method} request for ${req.url} from ${req.headers.origin}`);
   next();
@@ -29,10 +35,12 @@ app.use(express.json());
 
 
 app.use('/api/auth', authRoutes);
+app.use('/api/assignments', assignmentRoutes);
+
 app.use('/api/slides', slideRoutes);
 app.use('/api/flashcards', flashcardRoutes);
 
-sequelize.sync({ alter: true })
+sequelize.sync({ alter: false })
   .then(async () => {
     console.log('Đã đồng bộ Database!');
 

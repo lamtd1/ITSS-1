@@ -20,7 +20,7 @@ const SlideEditModal = ({ slide, onClose, onUpdate }) => {
                 .map(tag => tag.trim())
                 .filter(tag => tag.length > 0);
 
-            const response = await fetch(`http://localhost:5001/api/slides/${slide.id}`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/slides/${slide.id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
