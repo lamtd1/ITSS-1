@@ -1,38 +1,16 @@
-version: "3.9"
-
+version: '3.8'
 services:
-  # --------------------------
-  # Main Database (ITSS-1)
-  # --------------------------
-  main_db:
+  main-db:
     image: postgres:15
-    container_name: itss_main_db
-    restart: unless-stopped
+    container_name: itss-main-db
     environment:
       POSTGRES_DB: itss-1
       POSTGRES_USER: taduylam
-      POSTGRES_PASSWORD: "1"
+      POSTGRES_PASSWORD: 1
     ports:
       - "5434:5432"
     volumes:
-      - main_db_data:/var/lib/postgresql/data
-
-  # --------------------------
-  # AI Service Database
-  # --------------------------
-  ai_db:
-    image: postgres:15
-    container_name: itss_ai_db
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: ai_db
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: "1"
-    ports:
-      - "5432:5432"
-    volumes:
-      - ai_db_data:/var/lib/postgresql/data
+      - itss-main-db-data:/var/lib/postgresql/data
 
 volumes:
-  main_db_data:
-  ai_db_data:
+  itss-main-db-data:
