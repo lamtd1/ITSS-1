@@ -1,10 +1,11 @@
 import express from 'express';
 import cors from 'cors';
-import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import translationRoutes from './routes/translationRoutes.js';
+
+import Translation from './models/Translation.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,7 +23,15 @@ import sequelize from './config/database.js';
 
 // PostgreSQL Connection
 sequelize.authenticate()
-    .then(() => console.log('PostgreSQL connected for AI Service'))
+    .then(async () => {
+        console.log('PostgreSQL connected for AI Service');
+        try {
+            await sequelize.sync({ alter: true });
+            console.log('Translation table synced');
+        } catch (err) {
+            console.error('Error syncing database:', err);
+        }
+    })
     .catch(err => console.error('PostgreSQL connection error:', err));
 
 app.use('/', translationRoutes);

@@ -18,7 +18,7 @@ const StudentFlashcardCreate = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reload, setReload] = useState(0);
 
-  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
   // Fetch flashcard sets
   useEffect(() => {
@@ -72,7 +72,7 @@ const StudentFlashcardCreate = () => {
 
   const handleCreateSet = async (e) => {
     e.preventDefault();
-    
+
     if (!newSetTitle.trim()) {
       alert('タイトルを入力してください');
       return;
@@ -109,7 +109,7 @@ const StudentFlashcardCreate = () => {
         setNewSetTitle('');
         setNewSetDescription('');
         setShowCreateModal(false);
-        
+
         alert('セットを作成しました！');
       } else {
         alert('セットの作成に失敗しました');
@@ -161,32 +161,32 @@ const StudentFlashcardCreate = () => {
             新しいセットを作成
           </Button>
           <Button onClick={() => setShowUploadModal(true)}>
-            <span className="material-symbols-outlined mr-1">upload_file</span> 
+            <span className="material-symbols-outlined mr-1">upload_file</span>
             Excelでフラッシュカードセットを追加
           </Button>
         </div>
       </div>
 
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex gap-4">
-         <div className="relative flex-1">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
-            <input 
-                type="text" 
-                placeholder="フラッシュカードを検索..." 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-blue-500"
-            />
-         </div>
+        <div className="relative flex-1">
+          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+          <input
+            type="text"
+            placeholder="フラッシュカードを検索..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-blue-500"
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div 
+        <div
           onClick={() => setShowCreateModal(true)}
           className="border-2 border-dashed border-gray-300 rounded-xl p-8 flex flex-col items-center justify-center text-gray-400 hover:bg-gray-50 hover:border-blue-400 hover:text-blue-500 transition-all cursor-pointer h-48"
         >
-            <span className="material-symbols-outlined text-4xl mb-2">add</span>
-            <span className="font-medium">新規セット作成</span>
+          <span className="material-symbols-outlined text-4xl mb-2">add</span>
+          <span className="font-medium">新規セット作成</span>
         </div>
 
         {filteredSets.length === 0 ? (
@@ -195,31 +195,31 @@ const StudentFlashcardCreate = () => {
           </div>
         ) : (
           filteredSets.map((set) => (
-            <Card 
-              key={set.id} 
+            <Card
+              key={set.id}
               onClick={() => handleSetClick(set.id)}
               className="hover:shadow-md transition-all cursor-pointer group flex flex-col h-48 justify-between relative overflow-hidden"
             >
-                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <span className="material-symbols-outlined text-6xl text-gray-500">style</span>
+              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <span className="material-symbols-outlined text-6xl text-gray-500">style</span>
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-800 mb-1 group-hover:text-blue-600 transition-colors">{set.title}</h3>
+                {set.description && (
+                  <p className="text-sm text-gray-500 line-clamp-2 mb-1">{set.description}</p>
+                )}
+                <p className="text-sm text-gray-500">{set.count} 単語</p>
+              </div>
+
+              <div className="space-y-2 relative z-10">
+                <div className="flex justify-between text-xs text-gray-600">
+                  <span>習得率</span>
+                  <span>{set.progress}%</span>
                 </div>
-                <div>
-                    <h3 className="text-xl font-bold text-gray-800 mb-1 group-hover:text-blue-600 transition-colors">{set.title}</h3>
-                    {set.description && (
-                      <p className="text-sm text-gray-500 line-clamp-2 mb-1">{set.description}</p>
-                    )}
-                    <p className="text-sm text-gray-500">{set.count} 単語</p>
+                <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-blue-500 h-full" style={{ width: `${set.progress}%` }}></div>
                 </div>
-                
-                <div className="space-y-2 relative z-10">
-                    <div className="flex justify-between text-xs text-gray-600">
-                        <span>習得率</span>
-                        <span>{set.progress}%</span>
-                    </div>
-                    <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
-                        <div className="bg-blue-500 h-full" style={{ width: `${set.progress}%` }}></div>
-                    </div>
-                </div>
+              </div>
             </Card>
           ))
         )}

@@ -14,8 +14,8 @@ import AddCardModal from '../../components/flashcard/AddCardModal.jsx';
 const StudentFlashcardLearn = () => {
   const { setId } = useParams();
   const navigate = useNavigate();
-  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-  
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+
   const {
     set,
     cards,
@@ -57,12 +57,12 @@ const StudentFlashcardLearn = () => {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         markAsLearned(currentCard.id);
-        
+
         if (cards.length === 1) {
           navigate('/student/flashcards');
         } else if (currentIndex >= cards.length - 1) {
@@ -86,9 +86,9 @@ const StudentFlashcardLearn = () => {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         unmarkAsLearned(cardId);
       }
@@ -99,7 +99,7 @@ const StudentFlashcardLearn = () => {
 
   const handleAddCard = async (e) => {
     e.preventDefault();
-    
+
     if (!newCardFront.trim() || !newCardBack.trim()) {
       alert('表面と裏面の両方を入力してください');
       return;
@@ -134,7 +134,7 @@ const StudentFlashcardLearn = () => {
         setNewCardFront('');
         setNewCardBack('');
         setShowAddCardModal(false);
-        
+
         alert('カードを追加しました！');
       } else {
         alert('カードの追加に失敗しました');
