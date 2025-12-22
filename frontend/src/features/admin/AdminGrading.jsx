@@ -49,7 +49,7 @@ const AdminGrading = () => {
             await axios.post(`${baseBackendURL}/assignments/submission/${submissionId}/grade`, {
                 scores
             });
-            alert("採点が完了しました (Chấm điểm thành công)");
+            alert("採点が完了しました");
             navigate(-1); // Back
         } catch (e) {
             console.error(e);

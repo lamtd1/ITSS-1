@@ -78,11 +78,7 @@ const AdminAssignmentList = () => {
   };
 
   if (loading) {
-    return (
-      <div className="p-8 text-center text-gray-500">
-        読み込み中... (Đang tải...)
-      </div>
-    );
+    return <div className="p-8 text-center text-gray-500">読み込み中...</div>;
   }
 
   if (error) {
@@ -90,7 +86,7 @@ const AdminAssignmentList = () => {
       <div className="p-8 text-center text-red-500">
         <p>{error}</p>
         <button onClick={fetchAssignments} className="mt-4 underline">
-          再試行 (Thử lại)
+          再試行
         </button>
       </div>
     );
@@ -136,9 +132,7 @@ const AdminAssignmentList = () => {
                   asm.assigneesCount ||
                   0;
 
-                const studentCountDisplay = isAll
-                  ? "全員 (Tất cả)"
-                  : `${count} 名`;
+                const studentCountDisplay = isAll ? "全員" : `${count} 名`;
 
                 return (
                   <tr
@@ -161,10 +155,11 @@ const AdminAssignmentList = () => {
                     </td>
                     <td className="px-6 py-4">
                       <span
-                        className={`text-xs font-bold px-2 py-1 rounded ${status === "done"
-                          ? "bg-gray-100 text-gray-500"
-                          : "bg-green-100 text-green-700"
-                          }`}
+                        className={`text-xs font-bold px-2 py-1 rounded ${
+                          status === "done"
+                            ? "bg-gray-100 text-gray-500"
+                            : "bg-green-100 text-green-700"
+                        }`}
                       >
                         {status === "done" ? "終了" : "進行中"}
                       </span>

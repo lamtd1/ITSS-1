@@ -37,12 +37,16 @@ const AdminAssignmentCreate = () => {
         try {
           setLoadingData(true);
           // Gọi API dành riêng cho giáo viên mà ta vừa tạo ở Bước 1
-          const response = await axios.get(`${baseBackendURL}/assignments/${id}/teacher-detail`);
+          const response = await axios.get(
+            `${baseBackendURL}/assignments/${id}/teacher-detail`
+          );
           const data = response.data;
 
           // 1. Fill thông tin cơ bản
           // Format date từ ISO string sang YYYY-MM-DD để input type="date" hiểu
-          const formattedDate = data.deadline ? new Date(data.deadline).toISOString().split('T')[0] : "";
+          const formattedDate = data.deadline
+            ? new Date(data.deadline).toISOString().split("T")[0]
+            : "";
 
           setAssignmentInfo({
             title: data.title,
@@ -53,7 +57,7 @@ const AdminAssignmentCreate = () => {
           });
 
           // 2. Fill danh sách học sinh (nếu là specific)
-          if (data.assignType === 'specific' && data.assigneeList) {
+          if (data.assignType === "specific" && data.assigneeList) {
             // assigneeList trong DB lưu mảng string, axios tự parse JSON nếu cột là jsonb/json
             // Nếu DB lưu chuỗi thuần thì cần JSON.parse, nhưng Sequelize thường tự handle
             setAssignedEmails(data.assigneeList);
@@ -64,10 +68,9 @@ const AdminAssignmentCreate = () => {
           if (data.questions) {
             setQuestions(data.questions);
           }
-
         } catch (error) {
           console.error("Error fetching assignment details:", error);
-          alert("Dữ liệu bài tập không tồn tại hoặc bị lỗi.");
+          alert("課題データが存在しないか、エラーが発生しました。");
           navigate("/admin/assignments");
         } finally {
           setLoadingData(false);
@@ -77,7 +80,6 @@ const AdminAssignmentCreate = () => {
       fetchAssignmentData();
     }
   }, [id, isEditMode, navigate]);
-
 
   // --- TÍNH ĐIỂM ---
   const currentTotalScore = questions.reduce(
@@ -89,7 +91,7 @@ const AdminAssignmentCreate = () => {
 
   // ... (GIỮ NGUYÊN CÁC HÀM XỬ LÝ: handleInfoChange, handleAddEmail, handleFileUpload, các hàm xử lý Question/Option) ...
   // LƯU Ý: Copy lại các hàm handleInfoChange, handleAddEmail, handleFileUpload, addQuestion, removeQuestion... từ code cũ vào đây.
-  // Để gọn câu trả lời, tôi sẽ không paste lại các hàm logic không thay đổi. 
+  // Để gọn câu trả lời, tôi sẽ không paste lại các hàm logic không thay đổi.
   // Bạn hãy giữ nguyên code logic xử lý state trong phần này.
 
   // --- THÊM LẠI CÁC HÀM BỊ ẨN ĐỂ CODE CHẠY ĐƯỢC (Copy từ file gốc của bạn) ---
@@ -137,7 +139,9 @@ const AdminAssignmentCreate = () => {
       });
       if (emailList.length > 0) {
         setAssignedEmails((prev) => [...new Set([...prev, ...emailList])]);
-        alert(`${file.name} から ${emailList.length} 件のメールアドレスを読み込みました。`);
+        alert(
+          `${file.name} から ${emailList.length} 件のメールアドレスを読み込みました。`
+        );
       } else {
         alert("有効なメールアドレスが見つかりませんでした。");
       }
@@ -147,7 +151,8 @@ const AdminAssignmentCreate = () => {
   };
 
   const addQuestion = () => {
-    const newId = questions.length > 0 ? Math.max(...questions.map((q) => q.id)) + 1 : 1;
+    const newId =
+      questions.length > 0 ? Math.max(...questions.map((q) => q.id)) + 1 : 1;
     setQuestions([
       ...questions,
       {
@@ -234,7 +239,6 @@ const AdminAssignmentCreate = () => {
   };
   // -------------------------------------------------------------
 
-
   // --- SAVE & CALL API (CẬP NHẬT LOGIC NÀY) ---
   const handleSave = async () => {
     // 1. Validation (Giữ nguyên)
@@ -247,11 +251,18 @@ const AdminAssignmentCreate = () => {
       return;
     }
     if (!isScoreValid) {
-      alert(`エラー: 質問の合計点 (${currentTotalScore}) が課題の合計点 (${assignmentInfo.totalScore}) と一致しません。`);
+      alert(
+        `エラー: 質問の合計点 (${currentTotalScore}) が課題の合計点 (${assignmentInfo.totalScore}) と一致しません。`
+      );
       return;
     }
-    if (assignmentInfo.assignType === "specific" && assignedEmails.length === 0) {
-      alert("エラー: 学生を指定するか、Excelファイルをアップロードしてください。");
+    if (
+      assignmentInfo.assignType === "specific" &&
+      assignedEmails.length === 0
+    ) {
+      alert(
+        "エラー: 学生を指定するか、Excelファイルをアップロードしてください。"
+      );
       return;
     }
     const invalidQuestions = questions.filter(
@@ -269,7 +280,8 @@ const AdminAssignmentCreate = () => {
       endDate: assignmentInfo.endDate,
       totalScore: parseInt(assignmentInfo.totalScore),
       assignType: assignmentInfo.assignType,
-      assignedStudents: assignmentInfo.assignType === "all" ? [] : assignedEmails,
+      assignedStudents:
+        assignmentInfo.assignType === "all" ? [] : assignedEmails,
       questions: questions.map((q) => ({
         text: q.text,
         type: q.type,
@@ -285,7 +297,10 @@ const AdminAssignmentCreate = () => {
       let response;
       if (isEditMode) {
         // --- LOGIC EDIT (PUT) ---
-        response = await axios.put(`${baseBackendURL}/assignments/${id}`, payload);
+        response = await axios.put(
+          `${baseBackendURL}/assignments/${id}`,
+          payload
+        );
         alert("更新しました！");
       } else {
         // --- LOGIC CREATE (POST) ---
@@ -316,12 +331,15 @@ const AdminAssignmentCreate = () => {
             {isEditMode ? "課題編集" : "課題作成"}
           </h2>
           <p className="text-gray-500 text-sm">
-            {isEditMode ? "既存の課題内容を編集する" : "全体の課題を作成して登録する"}
+            {isEditMode
+              ? "既存の課題内容を編集する"
+              : "全体の課題を作成して登録する"}
           </p>
         </div>
         <div
-          className={`text-sm font-bold ${isScoreValid ? "text-green-600" : "text-red-500"
-            }`}
+          className={`text-sm font-bold ${
+            isScoreValid ? "text-green-600" : "text-red-500"
+          }`}
         >
           現在の合計: {currentTotalScore} / {assignmentInfo.totalScore} 点
         </div>
@@ -390,28 +408,100 @@ const AdminAssignmentCreate = () => {
                 </div>
               ) : (
                 questions.map((q, index) => (
-                  <div key={q.id} className="bg-gray-50 p-4 rounded-lg border border-gray-200 relative">
+                  <div
+                    key={q.id}
+                    className="bg-gray-50 p-4 rounded-lg border border-gray-200 relative"
+                  >
                     {/* ... Nội dung item câu hỏi ... giữ nguyên */}
                     <div className="flex justify-between items-center mb-3">
-                      <span className="font-bold text-sm text-gray-700">質問 {index + 1}</span>
-                      <button onClick={() => removeQuestion(q.id)} className="text-red-400 hover:text-red-600 p-1"><span className="material-symbols-outlined">delete</span></button>
+                      <span className="font-bold text-sm text-gray-700">
+                        質問 {index + 1}
+                      </span>
+                      <button
+                        onClick={() => removeQuestion(q.id)}
+                        className="text-red-400 hover:text-red-600 p-1"
+                      >
+                        <span className="material-symbols-outlined">
+                          delete
+                        </span>
+                      </button>
                     </div>
                     <div className="space-y-3">
-                      <input type="text" value={q.text} onChange={(e) => handleQuestionChange(q.id, "text", e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded" placeholder="質問内容..." />
+                      <input
+                        type="text"
+                        value={q.text}
+                        onChange={(e) =>
+                          handleQuestionChange(q.id, "text", e.target.value)
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded"
+                        placeholder="質問内容..."
+                      />
                       <div className="flex gap-2">
-                        <select value={q.type} onChange={(e) => handleQuestionChange(q.id, "type", e.target.value)} className="w-1/2 px-3 py-2 border border-gray-300 rounded"><option value="Tno">選択式</option><option value="Essay">記述式</option></select>
-                        <input type="number" value={q.score} onChange={(e) => handleQuestionChange(q.id, "score", e.target.value)} className="w-1/2 px-3 py-2 border border-gray-300 rounded text-right" placeholder="点数" />
+                        <select
+                          value={q.type}
+                          onChange={(e) =>
+                            handleQuestionChange(q.id, "type", e.target.value)
+                          }
+                          className="w-1/2 px-3 py-2 border border-gray-300 rounded"
+                        >
+                          <option value="Tno">選択式</option>
+                          <option value="Essay">記述式</option>
+                        </select>
+                        <input
+                          type="number"
+                          value={q.score}
+                          onChange={(e) =>
+                            handleQuestionChange(q.id, "score", e.target.value)
+                          }
+                          className="w-1/2 px-3 py-2 border border-gray-300 rounded text-right"
+                          placeholder="点数"
+                        />
                       </div>
                       {q.type === "Tno" && (
                         <div className="mt-4 pt-3 border-t border-gray-200 space-y-2">
-                          {q.options && q.options.map((opt) => (
-                            <div key={opt.id} className="flex items-center gap-2">
-                              <input type="radio" name={`correct-answer-${q.id}`} checked={opt.isCorrect} onChange={() => handleCorrectOptionChange(q.id, opt.id)} className="w-4 h-4" />
-                              <input type="text" value={opt.text} onChange={(e) => handleOptionTextChange(q.id, opt.id, e.target.value)} className="flex-1 px-2 py-1 border rounded" />
-                              <button onClick={() => removeOption(q.id, opt.id)} className="text-gray-400"><span className="material-symbols-outlined">close</span></button>
-                            </div>
-                          ))}
-                          <button onClick={() => addOption(q.id)} className="text-xs text-blue-600 font-bold">選択肢を追加</button>
+                          {q.options &&
+                            q.options.map((opt) => (
+                              <div
+                                key={opt.id}
+                                className="flex items-center gap-2"
+                              >
+                                <input
+                                  type="radio"
+                                  name={`correct-answer-${q.id}`}
+                                  checked={opt.isCorrect}
+                                  onChange={() =>
+                                    handleCorrectOptionChange(q.id, opt.id)
+                                  }
+                                  className="w-4 h-4"
+                                />
+                                <input
+                                  type="text"
+                                  value={opt.text}
+                                  onChange={(e) =>
+                                    handleOptionTextChange(
+                                      q.id,
+                                      opt.id,
+                                      e.target.value
+                                    )
+                                  }
+                                  className="flex-1 px-2 py-1 border rounded"
+                                />
+                                <button
+                                  onClick={() => removeOption(q.id, opt.id)}
+                                  className="text-gray-400"
+                                >
+                                  <span className="material-symbols-outlined">
+                                    close
+                                  </span>
+                                </button>
+                              </div>
+                            ))}
+                          <button
+                            onClick={() => addOption(q.id)}
+                            className="text-xs text-blue-600 font-bold"
+                          >
+                            選択肢を追加
+                          </button>
                         </div>
                       )}
                     </div>
@@ -420,7 +510,15 @@ const AdminAssignmentCreate = () => {
               )}
             </div>
             <div className="mt-4 pt-2">
-              <button onClick={addQuestion} className="w-full py-3 border-2 border-dashed border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50 font-bold"><span className="material-symbols-outlined mr-2">add_circle</span> 質問を追加</button>
+              <button
+                onClick={addQuestion}
+                className="w-full py-3 border-2 border-dashed border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50 font-bold"
+              >
+                <span className="material-symbols-outlined mr-2">
+                  add_circle
+                </span>{" "}
+                質問を追加
+              </button>
               <div ref={questionsEndRef} />
             </div>
           </Card>
@@ -429,37 +527,100 @@ const AdminAssignmentCreate = () => {
         <div className="space-y-6">
           <Card>
             {/* Phần Setting Total Score... giữ nguyên */}
-            <h3 className="font-bold text-sm text-gray-700 mb-3 border-b pb-2">設定</h3>
+            <h3 className="font-bold text-sm text-gray-700 mb-3 border-b pb-2">
+              設定
+            </h3>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">合計ポイント <span className="text-red-500">*</span></label>
-              <input name="totalScore" value={assignmentInfo.totalScore} onChange={(e) => setAssignmentInfo({ ...assignmentInfo, totalScore: e.target.value })} type="number" className="w-full px-4 py-2 border border-gray-300 rounded-lg font-bold text-blue-600 text-lg" />
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                合計ポイント <span className="text-red-500">*</span>
+              </label>
+              <input
+                name="totalScore"
+                value={assignmentInfo.totalScore}
+                onChange={(e) =>
+                  setAssignmentInfo({
+                    ...assignmentInfo,
+                    totalScore: e.target.value,
+                  })
+                }
+                type="number"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg font-bold text-blue-600 text-lg"
+              />
             </div>
           </Card>
 
           <Card>
             {/* Phần Assign Students... giữ nguyên logic hiển thị */}
-            <h3 className="font-bold text-sm text-gray-700 mb-3 border-b pb-2">対象学生</h3>
+            <h3 className="font-bold text-sm text-gray-700 mb-3 border-b pb-2">
+              対象学生
+            </h3>
             <div className="space-y-4">
               <div className="flex flex-col gap-2">
-                <label className="flex items-center"><input type="radio" name="assignType" value="all" checked={assignmentInfo.assignType === "all"} onChange={handleInfoChange} className="mr-2" /> 全員に割り当てる</label>
-                <label className="flex items-center"><input type="radio" name="assignType" value="specific" checked={assignmentInfo.assignType === "specific"} onChange={handleInfoChange} className="mr-2" /> 特定の学生</label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="assignType"
+                    value="all"
+                    checked={assignmentInfo.assignType === "all"}
+                    onChange={handleInfoChange}
+                    className="mr-2"
+                  />{" "}
+                  全員に割り当てる
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="assignType"
+                    value="specific"
+                    checked={assignmentInfo.assignType === "specific"}
+                    onChange={handleInfoChange}
+                    className="mr-2"
+                  />{" "}
+                  特定の学生
+                </label>
               </div>
               {assignmentInfo.assignType === "specific" && (
                 <div className="mt-2 pt-2 border-t border-gray-200">
                   <div className="mb-3 flex gap-2">
-                    <input type="text" value={inputEmail} onChange={(e) => setInputEmail(e.target.value)} className="flex-1 px-3 py-1 border rounded text-sm" placeholder="Email" />
-                    <button onClick={handleAddEmail} className="bg-blue-600 text-white px-3 py-1 rounded text-xs">追加</button>
+                    <input
+                      type="text"
+                      value={inputEmail}
+                      onChange={(e) => setInputEmail(e.target.value)}
+                      className="flex-1 px-3 py-1 border rounded text-sm"
+                      placeholder="Email"
+                    />
+                    <button
+                      onClick={handleAddEmail}
+                      className="bg-blue-600 text-white px-3 py-1 rounded text-xs"
+                    >
+                      追加
+                    </button>
                   </div>
                   <div className="mb-4">
                     <label className="cursor-pointer bg-gray-100 border px-3 py-1 rounded text-sm block text-center">
-                      Excel Upload <input type="file" accept=".xlsx" onChange={handleFileUpload} ref={fileInputRef} className="hidden" />
+                      Excel Upload{" "}
+                      <input
+                        type="file"
+                        accept=".xlsx"
+                        onChange={handleFileUpload}
+                        ref={fileInputRef}
+                        className="hidden"
+                      />
                     </label>
                   </div>
                   <div className="max-h-40 overflow-y-auto border bg-gray-50 p-2 rounded">
                     {assignedEmails.map((email, idx) => (
-                      <div key={idx} className="flex justify-between bg-white px-2 py-1 mb-1 border rounded text-sm">
+                      <div
+                        key={idx}
+                        className="flex justify-between bg-white px-2 py-1 mb-1 border rounded text-sm"
+                      >
                         <span>{email}</span>
-                        <button onClick={() => handleRemoveEmail(email)} className="text-red-500">x</button>
+                        <button
+                          onClick={() => handleRemoveEmail(email)}
+                          className="text-red-500"
+                        >
+                          x
+                        </button>
                       </div>
                     ))}
                   </div>
