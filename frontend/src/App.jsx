@@ -14,6 +14,8 @@ import AdminSlideUpload from './features/admin/AdminSlideUpload.jsx';
 import AdminStudentManage from './features/admin/AdminStudentManage.jsx';
 import AdminAssignmentList from './features/admin/AdminAssignmentList.jsx'; // Mới
 import AdminAssignmentCreate from './features/admin/AdminAssignmentCreate.jsx';
+import AdminStudentDetail from './features/admin/AdminStudentDetail.jsx';
+import AdminGrading from './features/admin/AdminGrading.jsx';
 
 // Student Pages
 import StudentDashboard from './features/student/StudentDashboard.jsx';
@@ -28,12 +30,12 @@ const App = () => {
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('kakehashi_user');
     if (!saved || saved === "undefined") return null;
-  try {
-    return JSON.parse(saved);
-  } catch {
-    return null;
-  }
-});
+    try {
+      return JSON.parse(saved);
+    } catch {
+      return null;
+    }
+  });
 
   const handleLogin = (userData) => {
     setUser(userData);
@@ -47,10 +49,10 @@ const App = () => {
 
   const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     if (!user) return <Navigate to="/login" replace />;
-    
+
     // Chuẩn hóa role của user về chữ thường để so sánh chính xác
     const userRole = (user.role || '').toLowerCase();
-    
+
     // Đảm bảo allowedRoles luôn là mảng và chuẩn hóa về chữ thường
     const validRoles = (Array.isArray(allowedRoles) ? allowedRoles : []).map(r => r.toLowerCase());
 
@@ -63,7 +65,7 @@ const App = () => {
         return <Navigate to="/student/dashboard" replace />;
       }
     }
-    
+
     return children;
   };
 
@@ -80,8 +82,8 @@ const App = () => {
         <Route path="/login" element={!user ? <LoginPage onLogin={handleLogin} /> : <Navigate to={getHomeRoute()} />} />
         <Route path="/register" element={!user ? <RegisterPage /> : <Navigate to={getHomeRoute()} replace />} />
         {/* Admin Routes */}
-        <Route 
-          path="/admin" 
+        <Route
+          path="/admin"
           element={
             <ProtectedRoute allowedRoles={['admin', 'teacher']}>
               <MainLayout user={user} onLogout={handleLogout} />
@@ -91,9 +93,11 @@ const App = () => {
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="slides" element={<AdminSlideUpload />} />
           <Route path="assignments" element={<AdminAssignmentList />} /> {/* Danh sách */}
-          <Route path="assignments/create" element={<AdminAssignmentCreate />} /> 
+          <Route path="assignments/create" element={<AdminAssignmentCreate />} />
           <Route path="/admin/assignments/edit/:id" element={<AdminAssignmentCreate />} />
           <Route path="students" element={<AdminStudentManage />} />
+          <Route path="students/:id" element={<AdminStudentDetail />} />
+          <Route path="grading/:submissionId" element={<AdminGrading />} />
         </Route>
 
         {/* Student Routes */}

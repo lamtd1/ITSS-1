@@ -4,7 +4,7 @@ import axios from "axios";
 import { MOCK_DATA } from "../../lib/mockData.js";
 import Button from "../../components/common/Button.jsx";
 
-const baseBackendURL = "http://localhost:5001/api";
+const baseBackendURL = `${import.meta.env.VITE_API_URL}/api`;
 // Giả định ID giáo viên đang đăng nhập là 2 (giống phần Create)
 const CURRENT_TEACHER_ID = 2;
 
@@ -161,11 +161,10 @@ const AdminAssignmentList = () => {
                     </td>
                     <td className="px-6 py-4">
                       <span
-                        className={`text-xs font-bold px-2 py-1 rounded ${
-                          status === "done"
-                            ? "bg-gray-100 text-gray-500"
-                            : "bg-green-100 text-green-700"
-                        }`}
+                        className={`text-xs font-bold px-2 py-1 rounded ${status === "done"
+                          ? "bg-gray-100 text-gray-500"
+                          : "bg-green-100 text-green-700"
+                          }`}
                       >
                         {status === "done" ? "終了" : "進行中"}
                       </span>

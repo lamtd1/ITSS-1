@@ -14,7 +14,7 @@ import AddCardModal from '../../components/flashcard/AddCardModal.jsx';
 const StudentFlashcardLearn = () => {
   const { setId } = useParams();
   const navigate = useNavigate();
-  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+  const baseUrl = import.meta.env.VITE_API_URL;
 
   const {
     set,

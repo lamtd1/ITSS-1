@@ -3,6 +3,7 @@ import {
   Question,
   User,
   AssignmentSubmission,
+  Answer,
   sequelize,
 } from "../models/index.js";
 import { Op } from "sequelize";
@@ -97,7 +98,7 @@ export const createAssignment = async (req, res) => {
         transaction: t,
       });
       console.log("students found:", students.length);
-      console.log("students:", students);  
+      console.log("students:", students);
       studentIds = students.map((s) => s.id);
     } else if (assignedStudents && assignedStudents.length > 0) {
       // Tìm theo danh sách email gửi lên
@@ -214,7 +215,7 @@ export const updateAssignment = async (req, res) => {
 
     // --- Kiểm tra xem có submissions đã nộp chưa ---
     const submittedCount = await AssignmentSubmission.count({
-      where: { 
+      where: {
         assignmentId: id,
         status: 'submitted'
       },
@@ -223,8 +224,8 @@ export const updateAssignment = async (req, res) => {
 
     if (submittedCount > 0) {
       await t.rollback();
-      return res.status(400).send({ 
-        message: `Không thể sửa bài tập đã có ${submittedCount} học sinh nộp bài. Vui lòng tạo bài tập mới.` 
+      return res.status(400).send({
+        message: `Không thể sửa bài tập đã có ${submittedCount} học sinh nộp bài. Vui lòng tạo bài tập mới.`
       });
     }
 
@@ -288,7 +289,7 @@ export const updateAssignment = async (req, res) => {
     // --- Bước 3: Cập nhật Submissions (CHỈ khi chưa có ai nộp bài) ---
     // Xóa submissions cũ (chỉ những cái chưa nộp)
     await AssignmentSubmission.destroy({
-      where: { 
+      where: {
         assignmentId: id,
         status: { [Op.in]: ['assigned', 'in_progress'] }
       },
@@ -374,7 +375,7 @@ export const deleteAssignment = async (req, res) => {
 
     // --- Kiểm tra xem có submissions đã nộp chưa ---
     const submittedCount = await AssignmentSubmission.count({
-      where: { 
+      where: {
         assignmentId: id,
         status: 'submitted'
       },
@@ -383,8 +384,8 @@ export const deleteAssignment = async (req, res) => {
 
     if (submittedCount > 0) {
       await t.rollback();
-      return res.status(400).send({ 
-        message: `Không thể xóa bài tập đã có ${submittedCount} học sinh nộp bài. Bạn có thể ẩn bài tập này thay vì xóa.` 
+      return res.status(400).send({
+        message: `Không thể xóa bài tập đã có ${submittedCount} học sinh nộp bài. Bạn có thể ẩn bài tập này thay vì xóa.`
       });
     }
 
@@ -416,8 +417,8 @@ export const deleteAssignment = async (req, res) => {
     await assignment.destroy({ transaction: t });
 
     await t.commit();
-    
-    res.send({ 
+
+    res.send({
       message: "Xóa bài tập thành công!",
       deletedData: {
         assignmentId: id,
@@ -436,7 +437,7 @@ export const deleteAssignment = async (req, res) => {
 export const getStudentAssignments = async (req, res) => {
   try {
     const userId = req.query.userId; // ID học sinh
-    
+
     if (!userId) {
       return res.status(400).send({ message: "userId is required" });
     }
@@ -466,15 +467,15 @@ export const getStudentAssignments = async (req, res) => {
       const now = new Date();
       const deadline = new Date(assignment.deadline);
       const isOverdue = now > deadline;
-      
+
       // Tính thời gian còn lại
       const timeDiff = deadline - now;
       let remainingTime = "Đã hết hạn";
-      
+
       if (!isOverdue) {
         const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
         const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        
+
         if (days > 0) {
           remainingTime = `${days} ngày`;
         } else if (hours > 0) {
@@ -519,16 +520,16 @@ export const getAssignmentDetails = async (req, res) => {
   try {
     const { id } = req.params; // ID assignment
     const { userId } = req.query; // ID học sinh
-    
+
     if (!userId) {
       return res.status(400).send({ message: "userId is required" });
     }
 
     // Kiểm tra xem học sinh có được giao bài này không
     const submission = await AssignmentSubmission.findOne({
-      where: { 
+      where: {
         assignmentId: id,
-        userId: userId 
+        userId: userId
       }
     });
 
@@ -551,7 +552,9 @@ export const getAssignmentDetails = async (req, res) => {
       return res.status(404).send({ message: "Không tìm thấy bài tập" });
     }
 
-    // Parse câu hỏi trắc nghiệm (loại bỏ đáp án đúng)
+    // Parse câu hỏi - nếu đã chấm xong thì show đáp án đúng
+    const isGraded = submission.status === 'graded';
+
     const questionsForStudent = assignment.questions.map((q) => {
       if (q.type === "Tno") {
         try {
@@ -561,11 +564,17 @@ export const getAssignmentDetails = async (req, res) => {
             text: content.prompt,
             type: q.type,
             score: q.score,
-            options: content.options.map((opt) => ({
-              id: opt.id,
-              text: opt.text,
-              // Không gửi isCorrect cho học sinh
-            })),
+            options: content.options.map((opt) => {
+              const optionData = {
+                id: opt.id,
+                text: opt.text,
+              };
+              // Only include isCorrect if assignment is graded
+              if (isGraded) {
+                optionData.isCorrect = opt.isCorrect;
+              }
+              return optionData;
+            }),
           };
         } catch (e) {
           return {
@@ -585,6 +594,21 @@ export const getAssignmentDetails = async (req, res) => {
       }
     });
 
+
+    // Fetch student's answers from Answers table
+    const studentAnswers = await Answer.findAll({
+      where: {
+        userId: userId,
+        questionId: assignment.questions.map(q => q.id)
+      }
+    });
+
+    // Format answers for frontend: [{ questionId, answer }]
+    const answersFormatted = studentAnswers.map(ans => ({
+      questionId: ans.questionId,
+      answer: ans.text  // answer_text contains the student's response
+    }));
+
     res.send({
       assignment: {
         id: assignment.id,
@@ -599,7 +623,7 @@ export const getAssignmentDetails = async (req, res) => {
         status: submission.status,
         submittedAt: submission.submittedAt,
         score: submission.score,
-        answers: submission.answers ? JSON.parse(submission.answers) : null,
+        answers: answersFormatted,
       },
     });
   } catch (error) {
@@ -615,7 +639,7 @@ export const submitAssignment = async (req, res) => {
   try {
     const { id } = req.params; // ID assignment
     const { userId, answers } = req.body; // ID học sinh và câu trả lời
-    
+
     // answers format: [{ questionId: 1, answer: "option_id" hoặc "text" }, ...]
 
     if (!userId || !answers) {
@@ -625,9 +649,9 @@ export const submitAssignment = async (req, res) => {
 
     // Tìm submission
     const submission = await AssignmentSubmission.findOne({
-      where: { 
+      where: {
         assignmentId: id,
-        userId: userId 
+        userId: userId
       },
       transaction: t
     });
@@ -655,39 +679,38 @@ export const submitAssignment = async (req, res) => {
       return res.status(400).send({ message: "Đã quá hạn nộp bài" });
     }
 
-    // Tính điểm tự động cho câu trắc nghiệm
+    // Tính điểm tự động cho câu trắc nghiệm và tạo Answer records
     let totalScore = 0;
-    const gradedAnswers = [];
 
     for (const userAnswer of answers) {
       const question = assignment.questions.find(q => q.id === userAnswer.questionId);
       if (!question) continue;
 
-      let isCorrect = false;
-      let earnedScore = 0;
+      let earnedScore = null;
 
       if (question.type === "Tno") {
         try {
           const content = JSON.parse(question.text);
           const correctOption = content.options.find(opt => opt.isCorrect);
           if (correctOption && correctOption.id == userAnswer.answer) {
-            isCorrect = true;
             earnedScore = question.score;
+          } else {
+            earnedScore = 0;
           }
         } catch (e) {
           console.error("Error parsing question content:", e);
+          earnedScore = 0;
         }
-      } else {
-        // Câu tự luận - cần chấm thủ công, tạm thời để null
-        earnedScore = null;
       }
+      // For essay questions, earnedScore remains null
 
-      gradedAnswers.push({
-        questionId: userAnswer.questionId,
-        answer: userAnswer.answer,
-        isCorrect,
-        earnedScore,
-      });
+      // Create Answer record
+      await Answer.create({
+        userId,
+        questionId: question.id,
+        text: String(userAnswer.answer), // Convert to string for both MCQ (option ID) and essay
+        score: earnedScore
+      }, { transaction: t });
 
       if (earnedScore !== null) {
         totalScore += earnedScore;
@@ -695,16 +718,19 @@ export const submitAssignment = async (req, res) => {
     }
 
     // Cập nhật submission
+    // Kiểm tra xem có câu tự luận nào không
+    const hasEssayQuestion = assignment.questions.some(q => q.type !== "Tno");
+    const finalStatus = hasEssayQuestion ? "pending_grading" : "submitted";
+
     await submission.update({
-      status: "submitted",
+      status: finalStatus,
       submittedAt: new Date(),
-      answers: JSON.stringify(gradedAnswers),
-      score: totalScore, // Chỉ tính điểm trắc nghiệm, câu tự luận chấm sau
+      score: totalScore, // Điểm hiện tại (chỉ trắc nghiệm)
     }, { transaction: t });
 
     await t.commit();
-    
-    res.send({ 
+
+    res.send({
       message: "Nộp bài thành công!",
       score: totalScore,
       submissionId: submission.id
@@ -723,9 +749,9 @@ export const saveDraft = async (req, res) => {
     const { userId, answers } = req.body;
 
     const submission = await AssignmentSubmission.findOne({
-      where: { 
+      where: {
         assignmentId: id,
-        userId: userId 
+        userId: userId
       }
     });
 
@@ -769,7 +795,7 @@ export const getTeacherAssignmentById = async (req, res) => {
     const formattedQuestions = assignment.questions.map((q) => {
       let parsedText = q.text;
       let options = [];
-      
+
       if (q.type === "Tno") {
         try {
           const contentObj = JSON.parse(q.text);
@@ -793,6 +819,256 @@ export const getTeacherAssignmentById = async (req, res) => {
       ...assignment.toJSON(),
       questions: formattedQuestions,
     });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: error.message });
+  }
+};
+
+// --- 9. CHẤM ĐIỂM (GIÁO VIÊN) ---
+export const gradeSubmission = async (req, res) => {
+  const t = await sequelize.transaction();
+  try {
+    const { submissionId } = req.params;
+    const { scores, feedback } = req.body;
+    // scores: { questionId: score, ... }
+    // feedback: "Nhận xét chung" (optional)
+
+    const submission = await AssignmentSubmission.findByPk(submissionId, {
+      include: [{
+        model: Assignment,
+        as: 'assignment',
+        include: [{ model: Question, as: 'questions' }]
+      }],
+      transaction: t
+    });
+    if (!submission) {
+      await t.rollback();
+      return res.status(404).send({ message: "Không tìm thấy bài nộp" });
+    }
+
+    // Cập nhật điểm cho từng câu trả lời trong bảng Answers
+    let newTotalScore = 0;
+
+    for (const questionId in scores) {
+      const teacherScore = parseInt(scores[questionId]);
+
+      // Update Answer record
+      const [updateCount] = await Answer.update(
+        { score: teacherScore },
+        {
+          where: {
+            userId: submission.userId,
+            questionId: parseInt(questionId)
+          },
+          transaction: t
+        }
+      );
+
+      // Warn if no records updated (student may need to resubmit)
+      if (updateCount === 0) {
+        console.warn(`No Answer record found for userId=${submission.userId}, questionId=${questionId}. Student may need to resubmit.`);
+      }
+    }
+
+    // Recalculate total score from all Answers
+    const allAnswers = await Answer.findAll({
+      where: { userId: submission.userId },
+      include: [{
+        model: Question,
+        as: 'question',
+        where: { assignmentId: submission.assignmentId }
+      }],
+      transaction: t
+    });
+
+    newTotalScore = allAnswers.reduce((sum, ans) => sum + (ans.score || 0), 0);
+
+    await submission.update({
+      score: newTotalScore,
+      status: "graded",
+    }, { transaction: t });
+
+    await t.commit();
+    res.send({ message: "Chấm điểm thành công", totalScore: newTotalScore });
+  } catch (error) {
+    await t.rollback();
+    console.error(error);
+    res.status(500).send({ message: "Lỗi server: " + error.message });
+  }
+};
+
+// --- 10. LẤY TIẾN ĐỘ HỌC SINH (ADMIN DASHBOARD) ---
+export const getStudentProgress = async (req, res) => {
+  try {
+    // Lấy tất cả học sinh
+    const students = await User.findAll({
+      include: [
+        {
+          model: (await import("../models/index.js")).Role,
+          as: "roles",
+          where: { name: "Student" },
+          attributes: []
+        },
+      ],
+      attributes: ["id", "username", "email"],
+      // Giả sử có cột avatar, nếu không thì bỏ
+    });
+
+    // Lấy thống kê submission cho từng học sinh
+    // Cách tối ưu: Group by userId trong bảng Submission
+    // Tuy nhiên để đơn giản, map qua từng user (lưu ý performance nếu user đông)
+
+    const progressData = await Promise.all(students.map(async (student) => {
+      const totalAssignments = await AssignmentSubmission.count({ where: { userId: student.id } });
+      const completedAssignments = await AssignmentSubmission.count({
+        where: {
+          userId: student.id,
+          status: { [Op.in]: ["submitted", "graded", "completed", "pending_grading"] }
+        }
+      });
+
+      // Tính %
+      const percent = totalAssignments > 0 ? Math.round((completedAssignments / totalAssignments) * 100) : 0;
+
+      return {
+        id: student.id,
+        name: student.username, // Hoặc fullName nếu có
+        email: student.email,
+        code: "NVA", // Mock hoặc lấy từ DB nếu có cột studentCode
+        progress: percent,
+        completedCounts: `${completedAssignments}/${totalAssignments}`,
+        status: "online", // Mock status
+        status: "online", // Mock status
+      };
+    }));
+
+    res.send(progressData);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: error.message });
+  }
+};
+
+// --- 11. LẤY DANH SÁCH BÀI TẬP CỦA MỘT HỌC SINH (CHO GIÁO VIÊN XEM ĐỂ CHẤM) ---
+export const getStudentAssignmentsForTeacher = async (req, res) => {
+  try {
+    const { studentId } = req.params;
+
+    const submissions = await AssignmentSubmission.findAll({
+      where: { userId: studentId },
+      include: [
+        {
+          model: Assignment,
+          as: "assignment",
+          attributes: ["id", "title", "deadline", "score"]
+        }
+      ],
+      order: [["submittedAt", "DESC"]]
+    });
+
+    const data = submissions.map(sub => {
+      // Logic tính trạng thái hiển thị
+      let statusDisplay = "Chưa làm";
+      if (sub.status === "assigned") statusDisplay = "Chưa làm";
+      else if (sub.status === "in_progress") statusDisplay = "Đang làm";
+      else if (sub.status === "submitted") statusDisplay = "Đã nộp"; // Cũ
+      else if (sub.status === "pending_grading") statusDisplay = "Chờ chấm"; // Mới
+      else if (sub.status === "graded") statusDisplay = "Đã chấm";
+
+      if (!sub.assignment) return null; // Skip if assignment deleted
+
+      return {
+        submissionId: sub.id,
+        assignmentId: sub.assignment.id,
+        title: sub.assignment.title,
+        deadline: sub.assignment.deadline,
+        submittedAt: sub.submittedAt,
+        status: sub.status,
+        statusDisplay: statusDisplay,
+        score: sub.score,
+        totalScore: sub.assignment.score
+      };
+    });
+
+    res.send(data.filter(Boolean)); // Filter out nulls
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: error.message });
+  }
+};
+
+// --- 12. LẤY CHI TIẾT BÀI LÀM ĐỂ CHẤM ---
+export const getSubmissionForGrading = async (req, res) => {
+  try {
+    const { submissionId } = req.params;
+
+    const submission = await AssignmentSubmission.findByPk(submissionId, {
+      include: [
+        {
+          model: User, // Info học sinh
+          as: "student",
+          attributes: ["id", "username", "email"]
+        },
+        {
+          model: Assignment,
+          as: "assignment",
+          include: [{ model: Question, as: "questions" }]
+        }
+      ]
+    });
+
+    if (!submission) return res.status(404).send({ message: "Not found" });
+
+    // Parse questions & fetch answers from Answers table
+    const questions = submission.assignment.questions.map(q => {
+      let content = q.text;
+      let options = [];
+      if (q.type === 'Tno') {
+        try {
+          const parsed = JSON.parse(q.text);
+          content = parsed.prompt;
+          options = parsed.options;
+        } catch (e) { }
+      }
+      return {
+        id: q.id,
+        text: content,
+        type: q.type,
+        options,
+        maxScore: q.score
+      };
+    });
+
+    // Fetch student answers from Answers table
+    const studentAnswers = await Answer.findAll({
+      where: {
+        userId: submission.userId,
+        questionId: questions.map(q => q.id)
+      }
+    });
+
+    // Merge answers vào questions để FE dễ render
+    const gradingData = questions.map(q => {
+      const ans = studentAnswers.find(a => a.questionId === q.id);
+      return {
+        ...q,
+        studentAnswer: ans ? ans.text : null,
+        earnedScore: ans ? (ans.score ?? 0) : 0,
+        autoGraded: q.type === 'Tno'
+      };
+    });
+
+    res.send({
+      submissionId: submission.id,
+      studentName: submission.student.username,
+      assignmentTitle: submission.assignment.title,
+      questions: gradingData,
+      totalScore: submission.score,
+      maxTotalScore: submission.assignment.score,
+      status: submission.status
+    });
+
   } catch (error) {
     console.error(error);
     res.status(500).send({ message: error.message });

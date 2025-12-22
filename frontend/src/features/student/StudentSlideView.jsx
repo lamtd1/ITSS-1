@@ -15,7 +15,7 @@ const StudentSlideView = () => {
   useEffect(() => {
     const fetchSlides = async () => {
       try {
-        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const response = await fetch(`${baseUrl}/api/slides`);
         const data = await response.json();
 
@@ -256,7 +256,7 @@ const StudentSlideView = () => {
             {/* PDF Viewer */}
             <div className="flex-1 relative bg-gray-100 overflow-hidden">
               <PDFViewer
-                fileUrl={`${(import.meta.env.VITE_API_URL || 'http://localhost:5001')}/api/slides/${selectedSlide.id}/pdf`}
+                fileUrl={`${(import.meta.env.VITE_API_URL || 'http://localhost:5000')}/api/slides/${selectedSlide.id}/pdf`}
               />
             </div>
           </div>

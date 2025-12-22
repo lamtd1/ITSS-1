@@ -18,7 +18,7 @@ const StudentFlashcardCreate = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reload, setReload] = useState(0);
 
-  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   // Fetch flashcard sets
   useEffect(() => {

@@ -4,13 +4,12 @@ import axios from "axios";
 import Card from "../../components/common/Card.jsx";
 import Button from "../../components/common/Button.jsx";
 
-const baseBackendURL = "http://localhost:5001/api";
-
-// --- FIX CỨNG ID TẠI ĐÂY ---
-const CURRENT_STUDENT_ID = 3;
-// ----------------------------
+const baseBackendURL = `${import.meta.env.VITE_API_URL}/api`;
 
 const StudentAssignmentDetail = () => {
+  // Lấy user từ localStorage
+  const user = JSON.parse(localStorage.getItem('kakehashi_user'));
+  const currentStudentId = user ? user.id : null;
   const { id } = useParams(); // Lấy ID bài tập từ URL
   const navigate = useNavigate();
 
@@ -32,7 +31,7 @@ const StudentAssignmentDetail = () => {
         const response = await axios.get(
           `${baseBackendURL}/assignments/${id}/details`,
           {
-            params: { userId: CURRENT_STUDENT_ID },
+            params: { userId: currentStudentId },
           }
         );
 
@@ -42,11 +41,11 @@ const StudentAssignmentDetail = () => {
 
         // Nếu đã làm bài (draft hoặc submitted), fill lại câu trả lời cũ
         if (response.data.submission?.answers) {
-           const savedAnswers = {};
-           response.data.submission.answers.forEach(ans => {
-              savedAnswers[ans.questionId] = ans.answer;
-           });
-           setAnswers(savedAnswers);
+          const savedAnswers = {};
+          response.data.submission.answers.forEach(ans => {
+            savedAnswers[ans.questionId] = ans.answer;
+          });
+          setAnswers(savedAnswers);
         }
 
       } catch (error) {
@@ -82,7 +81,7 @@ const StudentAssignmentDetail = () => {
 
   // 3. Nộp bài (Submit)
   const handleSubmit = async () => {
-    if (!window.confirm("本当に提出しますか？提出後は修正できません。 (Bạn có chắc muốn nộp bài?)")) return;
+    if (!window.confirm("本当に提出しますか？提出後は修正できません。")) return;
 
     try {
       const answersArray = Object.keys(answers).map(qId => ({
@@ -91,17 +90,17 @@ const StudentAssignmentDetail = () => {
       }));
 
       const payload = {
-        userId: CURRENT_STUDENT_ID, // Dùng ID fix cứng
+        userId: currentStudentId,
         answers: answersArray
       };
 
       const res = await axios.post(`${baseBackendURL}/assignments/${id}/submit`, payload);
-      
-      alert(`提出しました！ (Nộp bài thành công!)\nスコア: ${res.data.score}`);
+
+      alert(`提出しました！\nスコア: ${res.data.score}`);
       navigate("/student/assignments");
     } catch (error) {
       console.error("Submit error:", error);
-      alert(error.response?.data?.message || "エラーが発生しました (Lỗi khi nộp bài)");
+      alert(error.response?.data?.message || "エラーが発生しました");
     }
   };
 
@@ -114,20 +113,20 @@ const StudentAssignmentDetail = () => {
       }));
 
       await axios.post(`${baseBackendURL}/assignments/${id}/draft`, {
-        userId: CURRENT_STUDENT_ID, // Dùng ID fix cứng
+        userId: currentStudentId,
         answers: answersArray
       });
-      alert("下書きを保存しました (Đã lưu bản nháp)");
+      alert("下書きを保存しました");
     } catch (error) {
       console.error("Save draft error:", error);
-      alert("保存に失敗しました (Lỗi khi lưu nháp)");
+      alert("保存に失敗しました");
     }
   };
 
-  if (loading) return <div className="p-10 text-center">読み込み中... (Đang tải...)</div>;
+  if (loading) return <div className="p-10 text-center">読み込み中...</div>;
   if (!assignment) return null;
 
-  const isSubmitted = submissionStatus === 'submitted';
+  const isSubmitted = submissionStatus === 'submitted' || submissionStatus === 'pending_grading' || submissionStatus === 'graded';
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-20">
@@ -135,11 +134,11 @@ const StudentAssignmentDetail = () => {
       <Card className="border-l-4 border-blue-500">
         <h1 className="text-2xl font-bold text-gray-800">{assignment.title}</h1>
         <div className="text-gray-500 text-sm mt-1">
-           期限: {new Date(assignment.deadline).toLocaleString('ja-JP')}
+          期限: {new Date(assignment.deadline).toLocaleString('ja-JP')}
         </div>
         <p className="mt-4 text-gray-700 whitespace-pre-line">{assignment.description}</p>
         <div className="mt-2 text-right font-bold text-blue-600">
-           合計点: {assignment.score}
+          合計点: {assignment.score}
         </div>
       </Card>
 
@@ -153,27 +152,62 @@ const StudentAssignmentDetail = () => {
                 {q.score} 点
               </span>
             </div>
-            
+
             <div className="mb-4 text-gray-800">{q.text}</div>
 
             {/* Render input dựa trên loại câu hỏi */}
             {q.type === 'Tno' ? (
               // Trắc nghiệm
               <div className="space-y-2 pl-4">
-                {q.options && q.options.map((opt) => (
-                  <label key={opt.id} className={`flex items-center p-3 rounded border cursor-pointer hover:bg-gray-50 transition-colors ${answers[q.id] == opt.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
-                    <input
-                      type="radio"
-                      name={`question-${q.id}`}
-                      value={opt.id}
-                      checked={answers[q.id] == opt.id}
-                      onChange={() => handleOptionChange(q.id, opt.id)}
-                      disabled={isSubmitted}
-                      className="w-5 h-5 text-blue-600 mr-3"
-                    />
-                    <span>{opt.text}</span>
-                  </label>
-                ))}
+                {q.options && q.options.map((opt) => {
+                  const isStudentAnswer = answers[q.id] == opt.id;
+                  const isCorrectAnswer = opt.isCorrect;
+
+                  // Determine styling based on grading status
+                  let optionClass = "flex items-center p-3 rounded border transition-colors ";
+
+                  if (isSubmitted) {
+                    // After grading: show correct in green, wrong in red
+                    if (isCorrectAnswer) {
+                      optionClass += "border-green-500 bg-green-50 ";
+                    } else if (isStudentAnswer) {
+                      // Student selected this wrong answer
+                      optionClass += "border-red-500 bg-red-50 ";
+                    } else {
+                      optionClass += "border-gray-200 bg-gray-50 ";
+                    }
+                  } else {
+                    // Before submitting: show selected answer
+                    if (isStudentAnswer) {
+                      optionClass += "border-blue-500 bg-blue-50 cursor-pointer hover:bg-blue-100 ";
+                    } else {
+                      optionClass += "border-gray-200 cursor-pointer hover:bg-gray-50 ";
+                    }
+                  }
+
+                  return (
+                    <label key={opt.id} className={optionClass}>
+                      <input
+                        type="radio"
+                        name={`question-${q.id}`}
+                        value={opt.id}
+                        checked={isStudentAnswer}
+                        onChange={() => handleOptionChange(q.id, opt.id)}
+                        disabled={isSubmitted}
+                        className="w-5 h-5 text-blue-600 mr-3"
+                      />
+                      <span className={isSubmitted && isCorrectAnswer ? "font-semibold text-green-700" : isSubmitted && isStudentAnswer ? "text-red-700" : ""}>
+                        {opt.text}
+                      </span>
+                      {isSubmitted && isCorrectAnswer && (
+                        <span className="ml-auto text-green-600 font-bold text-sm">✓ 正解</span>
+                      )}
+                      {isSubmitted && isStudentAnswer && !isCorrectAnswer && (
+                        <span className="ml-auto text-red-600 font-bold text-sm">✗ 不正解</span>
+                      )}
+                    </label>
+                  );
+                })}
               </div>
             ) : (
               // Tự luận (Essay)
@@ -195,7 +229,7 @@ const StudentAssignmentDetail = () => {
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 shadow-lg z-10">
           <div className="max-w-4xl mx-auto flex justify-between items-center">
             <div className="text-sm text-gray-500">
-               回答済み: {Object.keys(answers).length} / {questions.length}
+              回答済み: {Object.keys(answers).length} / {questions.length}
             </div>
             <div className="flex gap-4">
               <Button variant="secondary" onClick={handleSaveDraft}>
