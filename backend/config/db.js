@@ -15,8 +15,6 @@ console.log('DB_PASS:', process.env.DB_PASS);
 console.log('DB_HOST:', process.env.DB_HOST);
 console.log('DB_PORT:', process.env.DB_PORT);
 
-
-
 const sequelize = new Sequelize(
   process.env.DB_NAME,
   process.env.DB_USER,

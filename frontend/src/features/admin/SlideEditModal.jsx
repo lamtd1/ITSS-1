@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Button from '../../components/common/Button.jsx';
 
 const SlideEditModal = ({ slide, onClose, onUpdate }) => {
@@ -9,6 +9,55 @@ const SlideEditModal = ({ slide, onClose, onUpdate }) => {
         description: slide.description || ''
     });
     const [loading, setLoading] = useState(false);
+    const [allTags, setAllTags] = useState([]);
+
+    // Fetch all tags
+    useEffect(() => {
+        const fetchAllTags = async () => {
+            try {
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/api/slides/tags/all`);
+                const data = await response.json();
+                if (data.success) {
+                    setAllTags(data.data);
+                }
+            } catch (error) {
+                console.error('Error fetching tags:', error);
+            }
+        };
+        fetchAllTags();
+    }, []);
+
+    // Toggle tag selection
+    const toggleTag = (tagName) => {
+        const currentTags = formData.tags
+            .split(',')
+            .map(t => t.trim())
+            .filter(t => t.length > 0);
+
+        const tagLower = tagName.toLowerCase();
+        const index = currentTags.findIndex(t => t.toLowerCase() === tagLower);
+
+        let newTags;
+        if (index > -1) {
+            // Remove tag
+            currentTags.splice(index, 1);
+            newTags = currentTags;
+        } else {
+            // Add tag
+            newTags = [...currentTags, tagLower];
+        }
+
+        setFormData({ ...formData, tags: newTags.join(', ') });
+    };
+
+    // Check if a tag is selected
+    const isTagSelected = (tagName) => {
+        const currentTags = formData.tags
+            .split(',')
+            .map(t => t.trim().toLowerCase())
+            .filter(t => t.length > 0);
+        return currentTags.includes(tagName.toLowerCase());
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -17,7 +66,7 @@ const SlideEditModal = ({ slide, onClose, onUpdate }) => {
         try {
             const tagArray = formData.tags
                 .split(',')
-                .map(tag => tag.trim())
+                .map(tag => tag.trim().toLowerCase())
                 .filter(tag => tag.length > 0);
 
             const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/slides/${slide.id}`, {
@@ -83,8 +132,34 @@ const SlideEditModal = ({ slide, onClose, onUpdate }) => {
                             type="text"
                             value={formData.tags}
                             onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                            placeholder="文法, 初級, N5 (カンマ区切り)"
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-blue-500 outline-none"
                         />
+                        <p className="text-xs text-gray-500 mt-1">
+                            既存のタグを選択するか、新しいタグを入力してください
+                        </p>
+
+                        {/* Tag Selector */}
+                        {allTags.length > 0 && (
+                            <div className="mt-3">
+                                <p className="text-xs font-medium text-gray-600 mb-2">既存のタグ:</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {allTags.map(tag => (
+                                        <button
+                                            key={tag.id}
+                                            type="button"
+                                            onClick={() => toggleTag(tag.name)}
+                                            className={`px-3 py-1.5 rounded-full text-sm transition-all ${isTagSelected(tag.name)
+                                                    ? 'bg-blue-600 text-white shadow-sm'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                }`}
+                                        >
+                                            {tag.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div>

@@ -17,7 +17,15 @@ const Tag = sequelize.define('Tag', {
 }, {
     tableName: 'Tag',
     timestamps: false,
-    freezeTableName: true
+    freezeTableName: true,
+    hooks: {
+        beforeSave: (tag) => {
+            // Convert tag name to lowercase before saving
+            if (tag.name) {
+                tag.name = tag.name.toLowerCase();
+            }
+        }
+    }
 });
 
 export default Tag;
