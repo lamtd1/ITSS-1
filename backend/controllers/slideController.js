@@ -76,9 +76,9 @@ export const createSlide = async (req, res) => {
         // Handle tags
         if (tags && Array.isArray(tags) && tags.length > 0) {
             for (const tagName of tags) {
-                // Find or create tag
+                // Find or create tag (convert to lowercase)
                 const [tag] = await Tag.findOrCreate({
-                    where: { name: tagName.trim() }
+                    where: { name: tagName.trim().toLowerCase() }
                 });
 
                 // Associate tag with slide
@@ -211,7 +211,7 @@ export const updateSlide = async (req, res) => {
             // Add new tags
             for (const tagName of tags) {
                 const [tag] = await Tag.findOrCreate({
-                    where: { name: tagName.trim() }
+                    where: { name: tagName.trim().toLowerCase() }
                 });
 
                 await SlideTag.create({
@@ -274,6 +274,27 @@ export const deleteSlide = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'スライドの削除に失敗しました',
+            error: error.message
+        });
+    }
+};
+
+// Get all unique tags
+export const getAllTags = async (req, res) => {
+    try {
+        const tags = await Tag.findAll({
+            order: [['name', 'ASC']]
+        });
+
+        res.status(200).json({
+            success: true,
+            data: tags
+        });
+    } catch (error) {
+        console.error('Error fetching tags:', error);
+        res.status(500).json({
+            success: false,
+            message: 'タグの取得に失敗しました',
             error: error.message
         });
     }

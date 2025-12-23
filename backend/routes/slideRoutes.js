@@ -26,6 +26,9 @@ router.post('/', upload.single('file'), slideController.createSlide);
 // Get all slides
 router.get('/', slideController.getAllSlides);
 
+// Get all tags (must be before /:id to avoid route conflict)
+router.get('/tags/all', slideController.getAllTags);
+
 // Get slide by ID
 router.get('/:id', slideController.getSlideById);
 
