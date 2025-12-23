@@ -23,7 +23,11 @@ import Role from './models/auth/Role.js';
 
 const app = express();
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: [
+    'http://localhost:5173',
+    'https://itss-1-nine.vercel.app',
+    'https://itss-1.vercel.app'
+  ],
   credentials: true
 }));
 
