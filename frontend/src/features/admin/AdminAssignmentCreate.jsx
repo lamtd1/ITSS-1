@@ -86,13 +86,6 @@ const AdminAssignmentCreate = () => {
   );
   const isScoreValid =
     currentTotalScore === parseInt(assignmentInfo.totalScore);
-
-  // ... (GIỮ NGUYÊN CÁC HÀM XỬ LÝ: handleInfoChange, handleAddEmail, handleFileUpload, các hàm xử lý Question/Option) ...
-  // LƯU Ý: Copy lại các hàm handleInfoChange, handleAddEmail, handleFileUpload, addQuestion, removeQuestion... từ code cũ vào đây.
-  // Để gọn câu trả lời, tôi sẽ không paste lại các hàm logic không thay đổi. 
-  // Bạn hãy giữ nguyên code logic xử lý state trong phần này.
-
-  // --- THÊM LẠI CÁC HÀM BỊ ẨN ĐỂ CODE CHẠY ĐƯỢC (Copy từ file gốc của bạn) ---
   const handleInfoChange = (e) => {
     const { name, value } = e.target;
     if (name === "assignType") {
@@ -118,7 +111,6 @@ const AdminAssignmentCreate = () => {
   };
 
   const handleFileUpload = (e) => {
-    // ... (Giữ nguyên code cũ)
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
@@ -235,9 +227,9 @@ const AdminAssignmentCreate = () => {
   // -------------------------------------------------------------
 
 
-  // --- SAVE & CALL API (CẬP NHẬT LOGIC NÀY) ---
+  // --- SAVE & CALL API ---
   const handleSave = async () => {
-    // 1. Validation (Giữ nguyên)
+    // 1. Validation
     if (!assignmentInfo.title.trim()) {
       alert("タイトルを入力してください。");
       return;

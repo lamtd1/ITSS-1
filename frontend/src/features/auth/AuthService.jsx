@@ -12,7 +12,7 @@ const AuthService = {
 
         const data = await res.json();
         if (!res.ok) {
-            throw new Error(data.message || 'Đăng nhập thất bại');
+            throw new Error(data.message || 'ログインに失敗しました');
         }
         return data; // { success, message, token, user }
     },
@@ -28,7 +28,7 @@ const AuthService = {
 
         const data = await res.json();
         if (!res.ok) {
-            throw new Error(data.message || 'Đăng ký thất bại'); // BE trả về message lỗi
+            throw new Error(data.message || '登録に失敗しました'); // BE trả về message lỗi
         }
         return data; // { success, message, data: { id, username, email, ... }
     },
@@ -43,7 +43,7 @@ const AuthService = {
         });
         const data = await res.json();
         if (!res.ok) {
-            throw new Error(data.message || 'Đăng xuất thất bại');
+            throw new Error(data.message || 'ログアウトに失敗しました');
         }
         return data; // { success, message }
     }

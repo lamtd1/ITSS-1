@@ -12,7 +12,7 @@ const FloatingTranslate = () => {
 
     setIsTranslating(true);
     try {
-      const response = await fetch('http://localhost:8000/translate', {
+      const response = await fetch(`${import.meta.env.VITE_AI_SERVICE_URL || 'http://localhost:8000'}/translate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -25,14 +25,14 @@ const FloatingTranslate = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        
+
         if (response.status === 429) {
-          alert('APIの利用制限に達しました。しばらく待ってから再度お試しください。\n\n' + 
-                'Đã vượt quá giới hạn API. Vui lòng thử lại sau.');
+          alert('APIの利用制限に達しました。しばらく待ってから再度お試しください。\n\n' +
+            'Đã vượt quá giới hạn API. Vui lòng thử lại sau.');
           setIsTranslating(false);
           return;
         }
-        
+
         throw new Error(errorData.message || 'Translation failed');
       }
 
