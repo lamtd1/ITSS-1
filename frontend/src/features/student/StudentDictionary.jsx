@@ -7,14 +7,19 @@ const StudentDictionary = () => {
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState([]);
 
+  // Get user from localStorage
+  const user = JSON.parse(localStorage.getItem('kakehashi_user') || '{}');
+
   // Fetch history on mount
   useEffect(() => {
-    fetchHistory();
+    if (user?.id) {
+      fetchHistory();
+    }
   }, []);
 
   const fetchHistory = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_AI_SERVICE_URL || 'http://localhost:8000'}/history`);
+      const res = await fetch(`${import.meta.env.VITE_AI_SERVICE_URL || 'http://localhost:8000'}/history?user_id=${user?.id}`);
       if (res.ok) {
         const data = await res.json();
         // Filter out duplicates based on text if needed, or just take top 10
@@ -41,7 +46,8 @@ const StudentDictionary = () => {
           text: searchTerm,
           source: 'auto',
           target: 'auto',
-          mode: 'dictionary'
+          mode: 'dictionary',
+          user_id: user?.id
         })
       });
 
