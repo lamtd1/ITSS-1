@@ -1,3 +1,50 @@
+-- Clean up existing data and reset sequences to avoid ID conflicts
+TRUNCATE TABLE "User",
+"Role",
+"Permission",
+"Flashcard_Set",
+"Flashcard",
+"Slide",
+"Tag",
+"Assignment",
+"Question",
+"Answers",
+"Assignment_Submission",
+"Recent_Activitie" RESTART IDENTITY CASCADE;
+
+-- Fix lỗi thiếu default value cho các cột created_at (User, Flashcard, Slide...)
+ALTER TABLE "User" ALTER COLUMN user_created_at SET DEFAULT NOW();
+
+ALTER TABLE "Flashcard_Set"
+ALTER COLUMN set_created_at
+SET DEFAULT NOW();
+
+ALTER TABLE "Flashcard"
+ALTER COLUMN flashcard_created_at
+SET DEFAULT NOW();
+
+ALTER TABLE "Slide" ALTER COLUMN slide_created_at SET DEFAULT NOW();
+
+ALTER TABLE "Slide_Note"
+ALTER COLUMN slide_note_created_at
+SET DEFAULT NOW();
+
+ALTER TABLE "Assignment"
+ALTER COLUMN assignment_created_at
+SET DEFAULT NOW();
+
+ALTER TABLE "Answers"
+ALTER COLUMN answer_submitted_at
+SET DEFAULT NOW();
+
+ALTER TABLE "Assignment_Submission"
+ALTER COLUMN submission_submitted_at
+SET DEFAULT NOW();
+
+ALTER TABLE "Recent_Activitie"
+ALTER COLUMN activity_time
+SET DEFAULT NOW();
+
 -- 1. Thêm dữ liệu vào bảng Role (2 quyền: Admin và User)
 INSERT INTO
     "Role" (role_name, role_description)
@@ -1264,115 +1311,4 @@ VALUES
         'Đã nộp bài cho: Bài tập Slide 3: Sprint 1 Report'
     );
 
--- 15. Thêm dữ liệu Translation
-INSERT INTO
-    "Translation" (
-        translation_id,
-        user_id,
-        translation_input_text,
-        translation_input_source,
-        translation_input_target,
-        translation_output,
-        translation_type,
-        translation_created_at
-    )
-VALUES (
-        1,
-        3,
-        'Hello world',
-        'en',
-        'vi',
-        '{"furigana": "こんにちは、せかい", "translation": "こんにちは、世界"}',
-        'sentence',
-        '2025-12-02 09:52:18.811'
-    ),
-    (
-        2,
-        3,
-        'Chào bạn, bạn thích thịt gà không',
-        'auto',
-        'auto',
-        '{"furigana": "こんにちは、とりにくは おすきですか？", "translation": "こんにちは、鶏肉はお好きですか？"}',
-        'sentence',
-        '2025-12-02 10:00:24.334'
-    ),
-    (
-        3,
-        3,
-        'Thịt gà',
-        'auto',
-        'auto',
-        '[{"word": "鶏肉", "meaning": "Thịt gà (nói chung)", "reading": "けいにく (keiniku)"}, {"word": "チキン", "meaning": "Thịt gà (từ mượn, thường dùng trong các món ăn phương Tây)", "reading": "chikin"}, {"word": "かしわ", "meaning": "Thịt gà (một cách gọi khác, đôi khi chỉ thịt gà mái)", "reading": "kashiwa"}, {"word": "手羽", "meaning": "Cánh gà", "reading": "teba"}, {"word": "もも肉", "meaning": "Thịt đùi gà", "reading": "momoniku"}]',
-        'list',
-        '2025-12-02 10:00:31.658'
-    ),
-    (
-        4,
-        3,
-        'とり',
-        'auto',
-        'auto',
-        '{"jlpt": "N5", "kanji": "鳥", "onyomi": "チョウ", "romaji": "tori", "usages": [{"word": "小鳥", "meaning": "Chim nhỏ", "reading": "ことり"}, {"word": "焼き鳥", "meaning": "Gà nướng xiên", "reading": "やきとり"}, {"word": "野鳥", "meaning": "Chim hoang dã", "reading": "やちょう"}], "kunyomi": "", "meaning": "Chim", "radical": {"symbol": "鳥", "meaning": "chim"}, "reading": "とり", "examples": [{"reading": "にわに とりが います。", "sentence": "庭に鳥がいます。", "translation": "Có một con chim trong vườn."}], "han_viet": "Điểu", "components": ["丿", "丶", "一", "口", "儿", "灬"], "definition": "Động vật có xương sống, thân phủ lông vũ, có mỏ và hai cánh, thường bay được.", "translation": "chim", "stroke_count": 11}',
-        'word',
-        '2025-12-02 10:00:43.063'
-    ),
-    (
-        5,
-        3,
-        '鳥が大好き',
-        'auto',
-        'auto',
-        '{"jlpt": "N5", "kanji": "鳥が大好き", "onyomi": "", "romaji": "tori ga daisuki", "usages": [{"word": "鳥", "meaning": "Chim", "reading": "とり"}, {"word": "大好き", "meaning": "Rất thích, yêu thích", "reading": "だいすき"}], "kunyomi": "", "meaning": "Rất thích chim", "radical": {"symbol": "鳥", "meaning": "chim"}, "reading": "とりがだいすき", "examples": [{"reading": "わたしはとりがだいすきです。", "sentence": "私は鳥が大好きです。", "translation": "Tôi rất thích chim."}], "han_viet": "Điểu đại hảo", "components": ["鳥", "が", "大", "好", "き"], "definition": "Diễn tả sự yêu thích hoặc đam mê lớn đối với chim.", "translation": "Yêu chim", "stroke_count": 11}',
-        'word',
-        '2025-12-02 10:00:53.835'
-    ),
-    (
-        6,
-        3,
-        'xin chào chú gà trống choai',
-        'auto',
-        'auto',
-        '{"furigana": "こんにちは、わかいおんどりさん。", "translation": "こんにちは、若い雄鶏さん。"}',
-        'sentence',
-        '2025-12-02 10:03:05.064'
-    ),
-    (
-        7,
-        3,
-        'gà trống\n',
-        'auto',
-        'auto',
-        '{"furigana": "おんどり", "translation": "雄鶏 (おんどり)"}',
-        'sentence',
-        '2025-12-02 10:03:15.953'
-    ),
-    (
-        8,
-        3,
-        'thịt chó mắm tôm',
-        'auto',
-        'auto',
-        '{"furigana": "いぬにくのえびみそぞえ", "translation": "犬肉のえび味噌添え"}',
-        'sentence',
-        '2025-12-02 10:03:26.445'
-    ),
-    (
-        9,
-        3,
-        'thịt chó',
-        'auto',
-        'auto',
-        '{"furigana": "いぬのにく", "translation": "犬の肉"}',
-        'sentence',
-        '2025-12-02 10:03:32.893'
-    ),
-    (
-        10,
-        3,
-        'thịt gà chấm muối, lá chanh',
-        'auto',
-        'auto',
-        '{"furigana": "とりにくのしおれもんぞえ", "translation": "鶏肉の塩レモン添え"}',
-        'sentence',
-        '2025-12-03 03:11:29.782'
-    );
+-- 15. Dữ liệu Translation QUAN TRỌNG: Bảng này chỉ tồn tại ở AI Service, không có ở Main Server nên ta bỏ qua phần insert này.

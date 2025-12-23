@@ -19,7 +19,8 @@ const StudentDictionary = () => {
 
   const fetchHistory = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_AI_SERVICE_URL || 'http://localhost:8000'}/history?user_id=${user?.id}`);
+      const dbUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api';
+      const res = await fetch(`${dbUrl}/ai/history?user_id=${user?.id}`);
       if (res.ok) {
         const data = await res.json();
         // Filter out duplicates based on text if needed, or just take top 10
@@ -39,7 +40,8 @@ const StudentDictionary = () => {
     setResult(null);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_AI_SERVICE_URL || 'http://localhost:8000'}/translate`, {
+      const dbUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api';
+      const response = await fetch(`${dbUrl}/ai/translate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
