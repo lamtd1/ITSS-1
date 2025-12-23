@@ -173,29 +173,37 @@ export const translate = async (req, res) => {
 
   } catch (error) {
     console.error("Translation error:", error);
-    
+
     // Handle quota exceeded error
     if (error.status === 429) {
-      return res.status(429).json({ 
-        error: "API quota exceeded", 
+      return res.status(429).json({
+        error: "API quota exceeded",
         message: "Google Gemini APIの無料枠を超過しました。しばらく待ってから再度お試しください。",
         details: "Đã vượt quá giới hạn API miễn phí. Vui lòng thử lại sau.",
         retryAfter: error.errorDetails?.find(d => d['@type'] === 'type.googleapis.com/google.rpc.RetryInfo')?.retryDelay
       });
     }
-    
+
     // Handle other errors
-    res.status(500).json({ 
-      error: "Translation failed", 
+    res.status(500).json({
+      error: "Translation failed",
       message: "翻訳に失敗しました。もう一度お試しください。",
-      details: error.message 
+      details: error.message
     });
   }
 };
 
 export const getHistory = async (req, res) => {
   try {
+    const { user_id } = req.query; // Extract user_id from query params
+
+    const whereClause = {};
+    if (user_id) {
+      whereClause.user_id = user_id;
+    }
+
     const history = await Translation.findAll({
+      where: whereClause, // Apply filter
       order: [['translation_created_at', 'DESC']],
       limit: 50
     });
