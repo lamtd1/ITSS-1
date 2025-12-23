@@ -14,7 +14,7 @@ const StudentDictionary = () => {
 
   const fetchHistory = async () => {
     try {
-      const res = await fetch('http://localhost:8000/history');
+      const res = await fetch(`${import.meta.env.VITE_AI_SERVICE_URL || 'http://localhost:8000'}/history`);
       if (res.ok) {
         const data = await res.json();
         // Filter out duplicates based on text if needed, or just take top 10
@@ -34,7 +34,7 @@ const StudentDictionary = () => {
     setResult(null);
 
     try {
-      const response = await fetch('http://localhost:8000/translate', {
+      const response = await fetch(`${import.meta.env.VITE_AI_SERVICE_URL || 'http://localhost:8000'}/translate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

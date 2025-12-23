@@ -19,7 +19,15 @@ package-lock.json
 # Environment
 # ----------------------------------------
 .env
-.env.*
+.env.local
+.env.*.local
+.env.development
+.env.production
+.env.test
+
+# Allow .env.example files (templates should be committed)
+!.env.example
+!**/.env.example
 
 
 # ----------------------------------------

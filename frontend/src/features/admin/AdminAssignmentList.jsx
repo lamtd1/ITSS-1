@@ -80,7 +80,7 @@ const AdminAssignmentList = () => {
   if (loading) {
     return (
       <div className="p-8 text-center text-gray-500">
-        読み込み中... (Đang tải...)
+        読み込み中...
       </div>
     );
   }
@@ -90,7 +90,7 @@ const AdminAssignmentList = () => {
       <div className="p-8 text-center text-red-500">
         <p>{error}</p>
         <button onClick={fetchAssignments} className="mt-4 underline">
-          再試行 (Thử lại)
+          再試行
         </button>
       </div>
     );

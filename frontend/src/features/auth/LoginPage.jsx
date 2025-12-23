@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthService from '../auth/AuthService.jsx';
-import { MOCK_DATA } from '../../lib/mockData.js';
 
 const LoginPage = ({ onLogin }) => {
   const [email, setEmail] = useState('');
@@ -11,40 +10,40 @@ const LoginPage = ({ onLogin }) => {
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError('');
-  setIsLoading(true);
-  try {
-    const data = await AuthService.login(email, password);
-    localStorage.setItem('accessToken', data.token);
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+    try {
+      const data = await AuthService.login(email, password);
+      localStorage.setItem('accessToken', data.token);
 
-    // Chuẩn hóa role nếu có trường roles
-    let userData = data.user;
-    if (userData.roles) {
-      const roleNames = Array.isArray(userData.roles)
-        ? userData.roles
-        : [userData.roles];
+      // Chuẩn hóa role nếu có trường roles
+      let userData = data.user;
+      if (userData.roles) {
+        const roleNames = Array.isArray(userData.roles)
+          ? userData.roles
+          : [userData.roles];
 
-      const lowerRoles = roleNames.map(r => r.toLowerCase());
-      if (lowerRoles.includes('admin')) userData.role = 'admin';
-      else if (lowerRoles.includes('teacher')) userData.role = 'teacher';
-      else userData.role = 'student';
-    } else {
-      userData.role = 'student';
+        const lowerRoles = roleNames.map(r => r.toLowerCase());
+        if (lowerRoles.includes('admin')) userData.role = 'admin';
+        else if (lowerRoles.includes('teacher')) userData.role = 'teacher';
+        else userData.role = 'student';
+      } else {
+        userData.role = 'student';
+      }
+
+      onLogin(userData);
+      navigate(
+        userData.role === 'teacher' ? '/admin/dashboard'
+          : userData.role === 'admin' ? '/admin/dashboard'
+            : '/student/dashboard'
+      );
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
     }
-
-    onLogin(userData);
-    navigate(
-      userData.role === 'teacher' ? '/admin/dashboard'
-      : userData.role === 'admin' ? '/admin/dashboard'
-      : '/student/dashboard'
-    );
-  } catch (err) {
-    setError(err.message);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-white p-6 lg:gap-32 md:gap-10">
@@ -55,7 +54,7 @@ const LoginPage = ({ onLogin }) => {
 
       {/* Mobile Logo */}
       <div className="md:hidden absolute top-10 left-0 w-full text-center">
-         <h1 className="text-4xl font-black tracking-widest text-black">KAKEHASHI</h1>
+        <h1 className="text-4xl font-black tracking-widest text-black">KAKEHASHI</h1>
       </div>
 
       {/* Right Side: Login Form Card */}
@@ -91,23 +90,23 @@ const LoginPage = ({ onLogin }) => {
           )}
 
           <div className="flex justify-center mt-8 mb-4">
-             <button
-                type="submit"
-                disabled={isLoading}
-                className="bg-[#1E50A2] text-white font-bold text-xl py-3 px-16 rounded-lg hover:bg-blue-900 transition-all shadow-md active:scale-95"
-             >
-                {isLoading ? '読み込み中...' : 'ログイン'}
-             </button>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="bg-[#1E50A2] text-white font-bold text-xl py-3 px-16 rounded-lg hover:bg-blue-900 transition-all shadow-md active:scale-95"
+            >
+              {isLoading ? '読み込み中...' : 'ログイン'}
+            </button>
           </div>
 
           <div className="text-xs text-white space-y-2 mt-6 px-2">
             <div className="flex justify-between items-center">
-               <span>パスワードをお忘れですか？</span>
-               <a href="#" className="underline text-[#1E50A2] font-bold hover:text-blue-900">再設定</a>
+              <span>パスワードをお忘れですか？</span>
+              <a href="#" className="underline text-[#1E50A2] font-bold hover:text-blue-900">再設定</a>
             </div>
             <div className="flex justify-between items-center">
-               <span>アカウントをお持ちないですか？</span>
-               <a href="/register" className="underline text-[#1E50A2] font-bold hover:text-blue-900">新規登録</a>
+              <span>アカウントをお持ちないですか？</span>
+              <a href="/register" className="underline text-[#1E50A2] font-bold hover:text-blue-900">新規登録</a>
             </div>
           </div>
         </form>
