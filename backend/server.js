@@ -17,12 +17,17 @@ import authRoutes from './routes/authRoutes.js';
 import assignmentRoutes from './routes/assignmentRoutes.js';
 import slideRoutes from './routes/slideRoutes.js';
 import flashcardRoutes from './routes/flashcardRoutes.js';
+import aiRoutes from './routes/aiRoutes.js';
 import Role from './models/auth/Role.js';
 
 
 const app = express();
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: [
+    'http://localhost:5173',
+    'https://itss-1-nine.vercel.app',
+    'https://itss-1.vercel.app'
+  ],
   credentials: true
 }));
 
@@ -39,6 +44,7 @@ app.use('/api/assignments', assignmentRoutes);
 
 app.use('/api/slides', slideRoutes);
 app.use('/api/flashcards', flashcardRoutes);
+app.use('/api/ai', aiRoutes);
 
 sequelize.sync({ alter: false })
   .then(async () => {

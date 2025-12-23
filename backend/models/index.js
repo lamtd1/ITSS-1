@@ -15,41 +15,46 @@ import Assignment from './lesson/Assignment.js';
 import Question from './lesson/Question.js';
 import AssignmentSubmission from './lesson/AssignmentSubmission.js';
 import Answer from './lesson/Answer.js';
+import Translation from './ai/Translation.js';
 
 // THIẾT LẬP QUAN HỆ GIỮA CÁC BẢNG
 
 //--- User & Role (m-n) ---
 User.belongsToMany(Role, {
-    through: UserRole,
-    foreignKey: 'userId',
-    otherKey: 'roleId',
-    as: 'roles' // Alias để dùng trong câu query (user.roles)
+  through: UserRole,
+  foreignKey: 'userId',
+  otherKey: 'roleId',
+  as: 'roles' // Alias để dùng trong câu query (user.roles)
 });
 
 Role.belongsToMany(User, {
-    through: UserRole,
-    foreignKey: 'roleId',
-    otherKey: 'userId',
+  through: UserRole,
+  foreignKey: 'roleId',
+  otherKey: 'userId',
 });
 
 // --- Role & Permission (m-n) ---
 Role.belongsToMany(Permission, {
-    through: RolePermission,
-    foreignKey: 'roleId',
-    otherKey: 'permissionId',
-    as: 'permissions'
+  through: RolePermission,
+  foreignKey: 'roleId',
+  otherKey: 'permissionId',
+  as: 'permissions'
 });
 
 Permission.belongsToMany(Role, {
-    through: RolePermission,
-    foreignKey: 'permissionId',
-    otherKey: 'roleId',
-    as: 'roles'
-}); 
+  through: RolePermission,
+  foreignKey: 'permissionId',
+  otherKey: 'roleId',
+  as: 'roles'
+});
 
 // User & RecentActivity (1-n)
 User.hasMany(RecentActivity, { foreignKey: 'userId', as: 'activities' });
 RecentActivity.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+// User & Translation (1-n)
+User.hasMany(Translation, { foreignKey: 'user_id', as: 'translations' });
+Translation.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 
 // User & FlashcardSet (1-n)
 User.hasMany(FlashcardSet, { foreignKey: 'userId', as: 'flashcardSets', onDelete: 'CASCADE' });
@@ -77,16 +82,16 @@ Tag.belongsToMany(Slide, { through: SlideTag, foreignKey: 'tagId', otherKey: 'sl
 
 // --- Assignment (Bài tập) ---
 // User tạo bài tập (GV)
-User.hasMany(Assignment, { 
-  foreignKey: 'userId', 
+User.hasMany(Assignment, {
+  foreignKey: 'userId',
   as: 'createdAssignments',
   onDelete: 'RESTRICT' // Giữ lại assignment nếu user bị xóa (theo SQL: ON DELETE RESTRICT)
 });
 Assignment.belongsTo(User, { foreignKey: 'userId', as: 'creator' });
 
 // Assignment có nhiều Question
-Assignment.hasMany(Question, { 
-  foreignKey: 'assignmentId', 
+Assignment.hasMany(Question, {
+  foreignKey: 'assignmentId',
   as: 'questions',
   onDelete: 'CASCADE' // Xóa assignment xóa luôn câu hỏi
 });
@@ -94,16 +99,16 @@ Question.belongsTo(Assignment, { foreignKey: 'assignmentId', as: 'assignment' })
 
 // --- Submission (Nộp bài) ---
 // User nộp bài (HS)
-User.hasMany(AssignmentSubmission, { 
-  foreignKey: 'userId', 
+User.hasMany(AssignmentSubmission, {
+  foreignKey: 'userId',
   as: 'submissions',
   onDelete: 'RESTRICT' // Giữ lại bài nộp nếu user bị xóa
 });
 AssignmentSubmission.belongsTo(User, { foreignKey: 'userId', as: 'student' });
 
 // Assignment có nhiều bài nộp
-Assignment.hasMany(AssignmentSubmission, { 
-  foreignKey: 'assignmentId', 
+Assignment.hasMany(AssignmentSubmission, {
+  foreignKey: 'assignmentId',
   as: 'submissions',
   onDelete: 'CASCADE' // Xóa assignment xóa luôn bài nộp
 });
@@ -111,16 +116,16 @@ AssignmentSubmission.belongsTo(Assignment, { foreignKey: 'assignmentId', as: 'as
 
 // --- Answer (Câu trả lời) ---
 // User trả lời câu hỏi
-User.hasMany(Answer, { 
-  foreignKey: 'userId', 
+User.hasMany(Answer, {
+  foreignKey: 'userId',
   as: 'answers',
   onDelete: 'RESTRICT' // Giữ lại câu trả lời nếu user bị xóa
 });
 Answer.belongsTo(User, { foreignKey: 'userId', as: 'student' });
 
 // Question có nhiều câu trả lời
-Question.hasMany(Answer, { 
-  foreignKey: 'questionId', 
+Question.hasMany(Answer, {
+  foreignKey: 'questionId',
   as: 'answers',
   onDelete: 'CASCADE' // Xóa câu hỏi xóa luôn câu trả lời
 });
@@ -135,6 +140,7 @@ export {
   Permission,
   RolePermission,
   RecentActivity,
+  Translation,
   FlashCard,
   FlashcardSet,
   Slide,

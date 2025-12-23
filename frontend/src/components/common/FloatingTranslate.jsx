@@ -12,7 +12,8 @@ const FloatingTranslate = () => {
 
     setIsTranslating(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_AI_SERVICE_URL || 'http://localhost:8000'}/translate`, {
+      const dbUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api';
+      const response = await fetch(`${dbUrl}/ai/translate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
