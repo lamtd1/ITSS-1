@@ -18,6 +18,7 @@ import assignmentRoutes from './routes/assignmentRoutes.js';
 import slideRoutes from './routes/slideRoutes.js';
 import flashcardRoutes from './routes/flashcardRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 import Role from './models/auth/Role.js';
 
 
@@ -45,6 +46,7 @@ app.use('/api/assignments', assignmentRoutes);
 app.use('/api/slides', slideRoutes);
 app.use('/api/flashcards', flashcardRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/admin', adminRoutes);
 
 sequelize.sync({ alter: false })
   .then(async () => {

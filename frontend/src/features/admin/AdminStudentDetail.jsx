@@ -81,17 +81,17 @@ const AdminStudentDetail = () => {
                                     </td>
                                     <td className="px-6 py-4">
                                         <span
-                                            className={`px-2.5 py-1 rounded-full text-xs font-bold ${asm.status === "graded" || asm.status === "completed"
-                                                    ? "bg-green-100 text-green-700"
-                                                    : asm.status === "submitted" || asm.status === "pending_grading"
-                                                        ? "bg-yellow-100 text-yellow-700"
-                                                        : "bg-gray-100 text-gray-600"
+                                            className={`inline-block whitespace-nowrap px-2.5 py-1 rounded-full text-xs font-bold ${asm.status === "graded" || asm.status === "completed"
+                                                ? "bg-green-100 text-green-700"
+                                                : asm.status === "submitted" || asm.status === "pending_grading"
+                                                    ? "bg-yellow-100 text-yellow-700"
+                                                    : "bg-gray-100 text-gray-600"
                                                 }`}
                                         >
                                             {asm.statusDisplay}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 font-bold text-gray-800">
+                                    <td className="px-6 py-4 font-bold text-gray-800 whitespace-nowrap">
                                         {asm.score !== null ? `${asm.score} / ${asm.totalScore}` : "-"}
                                     </td>
                                     <td className="px-6 py-4 text-right">
@@ -100,6 +100,7 @@ const AdminStudentDetail = () => {
                                             asm.status === "graded") && (
                                                 <Button
                                                     size="sm"
+                                                    className="whitespace-nowrap"
                                                     onClick={() =>
                                                         navigate(`/admin/grading/${asm.submissionId}`)
                                                     }

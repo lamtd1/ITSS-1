@@ -134,7 +134,13 @@ const StudentAssignmentDetail = () => {
       <Card className="border-l-4 border-blue-500">
         <h1 className="text-2xl font-bold text-gray-800">{assignment.title}</h1>
         <div className="text-gray-500 text-sm mt-1">
-          期限: {new Date(assignment.deadline).toLocaleString('ja-JP')}
+          期限: {new Date(assignment.deadline).toLocaleString('ja-JP', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+          })}
         </div>
         <p className="mt-4 text-gray-700 whitespace-pre-line">{assignment.description}</p>
         <div className="mt-2 text-right font-bold text-blue-600">
@@ -147,7 +153,7 @@ const StudentAssignmentDetail = () => {
         {questions.map((q, index) => (
           <Card key={q.id}>
             <div className="flex justify-between mb-2">
-              <span className="font-bold text-lg">質問 {index + 1}</span>
+              <span className="font-bold text-lg">問題 {index + 1}</span>
               <span className="text-sm bg-gray-100 px-2 py-1 rounded text-gray-600">
                 {q.score} 点
               </span>

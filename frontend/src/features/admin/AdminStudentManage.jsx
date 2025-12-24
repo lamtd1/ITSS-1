@@ -49,33 +49,33 @@ const AdminStudentManage = () => {
         <table className="w-full text-left">
           <thead className="bg-gray-50 text-gray-600 text-sm uppercase font-semibold border-b border-gray-200">
             <tr>
-              <th className="px-6 py-4">学生情報</th>
-              <th className="px-6 py-4">進捗率</th>
-              <th className="px-6 py-4">ステータス</th>
-              <th className="px-6 py-4 text-right">操作</th>
+              <th className="px-6 py-4 whitespace-nowrap">学生情報</th>
+              <th className="px-6 py-4 whitespace-nowrap">進捗率</th>
+              <th className="px-6 py-4 whitespace-nowrap">ステータス</th>
+              <th className="px-6 py-4 text-right whitespace-nowrap">操作</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {students.map((student) => (
               <tr key={student.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 flex items-center gap-3">
+                <td className="px-6 py-4 flex items-center gap-3 whitespace-nowrap">
                   <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">
                     {student.code || student.name.substring(0, 2).toUpperCase()}
                   </div>
                   <div><div className="font-medium text-gray-900">{student.name}</div><div className="text-xs text-gray-500">{student.email}</div></div>
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center gap-2">
                     <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden"><div style={{ width: `${student.progress}%` }} className="h-full bg-blue-500"></div></div>
                     <span className="text-xs font-medium">{student.progress}% ({student.completedCounts})</span>
                   </div>
                 </td>
-                <td className="px-6 py-4">
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${student.status === 'online' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap ${student.status === 'online' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
                     {student.status === 'online' ? '● オンライン' : '○ オフライン'}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-right">
+                <td className="px-6 py-4 text-right whitespace-nowrap">
                   <Button
                     variant="ghost"
                     className="text-sm"

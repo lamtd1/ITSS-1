@@ -470,18 +470,18 @@ export const getStudentAssignments = async (req, res) => {
 
       // Tính thời gian còn lại
       const timeDiff = deadline - now;
-      let remainingTime = "Đã hết hạn";
+      let remainingTime = "期限切れ";
 
       if (!isOverdue) {
         const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
         const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
 
         if (days > 0) {
-          remainingTime = `${days} ngày`;
+          remainingTime = `${days}日`;
         } else if (hours > 0) {
-          remainingTime = `${hours} giờ`;
+          remainingTime = `${hours}時間`;
         } else {
-          remainingTime = "Dưới 1 giờ";
+          remainingTime = "1時間未満";
         }
       }
 
@@ -969,12 +969,12 @@ export const getStudentAssignmentsForTeacher = async (req, res) => {
 
     const data = submissions.map(sub => {
       // Logic tính trạng thái hiển thị
-      let statusDisplay = "Chưa làm";
-      if (sub.status === "assigned") statusDisplay = "Chưa làm";
-      else if (sub.status === "in_progress") statusDisplay = "Đang làm";
-      else if (sub.status === "submitted") statusDisplay = "Đã nộp"; // Cũ
-      else if (sub.status === "pending_grading") statusDisplay = "Chờ chấm"; // Mới
-      else if (sub.status === "graded") statusDisplay = "Đã chấm";
+      let statusDisplay = "未提出";
+      if (sub.status === "assigned") statusDisplay = "未提出";
+      else if (sub.status === "in_progress") statusDisplay = "実施中";
+      else if (sub.status === "submitted") statusDisplay = "提出済み"; // 旧
+      else if (sub.status === "pending_grading") statusDisplay = "採点待ち"; // 新
+      else if (sub.status === "graded") statusDisplay = "採点済み";
 
       if (!sub.assignment) return null; // Skip if assignment deleted
 
